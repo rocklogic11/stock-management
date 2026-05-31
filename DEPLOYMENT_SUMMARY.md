@@ -262,7 +262,7 @@ stock-management/
 
 ```bash
 # 查看PM2日志
-pm2 logs kuwanyubeiqi-server
+pm2 logs stock-management-server
 
 # 检查端口占用
 sudo lsof -i :3000
@@ -315,7 +315,7 @@ docker compose restart
 # PM2 进程管理
 pm2 status                      # 查看状态
 pm2 logs                        # 查看日志
-pm2 restart kuwanyubeiqi-server # 重启应用
+pm2 restart stock-management-server # 重启应用
 pm2 monit                       # 实时监控
 
 # 数据库备份
@@ -356,5 +356,8 @@ docker compose restart         # 重启服务
 
 ---
 
-**最后更新**: 2026-04-29
-**文档版本**: 1.0
+**最后更新**: 2026-05-31
+**文档版本**: 1.1
+**线上地址**: http://121.40.110.240 (阿里云 ECS)
+**部署路径**: /var/www/stock-management/
+**数据库**: SQLite (线上)
