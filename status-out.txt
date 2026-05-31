@@ -1,0 +1,14 @@
+=== FILES ===
+total 12
+drwxr-xr-x 3 www-data www-data 4096 May 13 10:14 .
+drwxr-xr-x 5 root     root     4096 May 13 10:14 ..
+drwxr-xr-x 2 www-data www-data 4096 May 13 10:14 assets
+=== ASSETS ===
+total 8
+drwxr-xr-x 2 www-data www-data 4096 May 13 10:14 .
+drwxr-xr-x 3 www-data www-data 4096 May 13 10:14 ..
+=== INDEX ===
+NO INDEX.HTML
+=== PERMS FIX ===
+DONE
+

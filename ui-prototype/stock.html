@@ -1,0 +1,224 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>库存查询 - 库存预备齐</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
+        
+        .page-container { padding: 20px; }
+        .page-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+        
+        .btn { display: inline-block; padding: 8px 16px; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        .btn-secondary { background: #fff; color: #333; border: 1px solid #ddd; }
+        
+        .filter-bar { background: #fff; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .filter-input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-right: 10px; }
+        
+        .table { width: 100%; border-collapse: collapse; background: #fff; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f9f9f9; font-weight: 600; }
+        
+        /* 统计卡片 */
+        .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 4px; border: 1px solid #ddd; }
+        .stat-value { font-size: 24px; font-weight: 600; margin: 10px 0; }
+        .stat-label { color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <h2 class="page-title">实时库存查询</h2>
+        
+        <!-- 统计卡片 -->
+        <div class="stat-cards">
+            <div class="stat-card">
+                <div class="stat-label">总商品数</div>
+                <div class="stat-value">156</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">总库存价值(成本)</div>
+                <div class="stat-value">¥45,680</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">总库存价值(零售)</div>
+                <div class="stat-value">¥78,900</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">库存预警数</div>
+                <div class="stat-value" style="color: #f00;">8</div>
+            </div>
+        </div>
+        
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+            <input type="text" class="filter-input" placeholder="搜索商品名称/SKU">
+            <select class="filter-input">
+                <option>全部分类</option>
+                <option>模型玩偶</option>
+                <option>模型汽车</option>
+                <option>模型机器人</option>
+            </select>
+            <select class="filter-input">
+                <option>全部库存</option>
+                <option>有库存</option>
+                <option>无库存</option>
+                <option>低库存</option>
+            </select>
+            <button class="btn">搜索</button>
+        </div>
+        
+        <!-- 库存列表 -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>商品名称</th>
+                    <th>分类</th>
+                    <th>当前库存</th>
+                    <th>加权平均成本</th>
+                    <th>库存金额(成本)</th>
+                    <th>零售价</th>
+                    <th>库存金额(零售)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>KW-TOY-001</td>
+                    <td>钢铁侠模型玩偶</td>
+                    <td>模型玩偶</td>
+                    <td>15</td>
+                    <td>¥120</td>
+                    <td>¥1,800</td>
+                    <td>¥199</td>
+                    <td>¥2,985</td>
+                </tr>
+                <tr>
+                    <td>KW-TOY-002</td>
+                    <td>蜘蛛侠模型玩偶</td>
+                    <td>模型玩偶</td>
+                    <td>3</td>
+                    <td>¥100</td>
+                    <td>¥300</td>
+                    <td>¥179</td>
+                    <td>¥537</td>
+                </tr>
+                <tr>
+                    <td>KW-TOY-003</td>
+                    <td>闪电麦昆模型汽车</td>
+                    <td>模型汽车</td>
+                    <td>0</td>
+                    <td>¥80</td>
+                    <td>¥0</td>
+                    <td>¥129</td>
+                    <td>¥0</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 20px;">
+            <button class="btn" onclick="showValueStats()">查看价值统计</button>
+            <button class="btn btn-secondary">导出Excel</button>
+        </div>
+    </div>
+    
+    <!-- 库存价值统计弹窗 -->
+    <div id="valueStatsModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="background: #fff; padding: 30px; border-radius: 8px; width: 600px; margin: 50px auto;">
+            <h3 style="margin-bottom: 20px;">库存价值统计</h3>
+            
+            <div style="margin-bottom: 20px;">
+                <h4>按进货成本计算</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>商品名称</th>
+                            <th>库存数量</th>
+                            <th>加权平均成本</th>
+                            <th>库存金额</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>钢铁侠模型玩偶</td>
+                            <td>15</td>
+                            <td>¥120</td>
+                            <td>¥1,800</td>
+                        </tr>
+                        <tr>
+                            <td>蜘蛛侠模型玩偶</td>
+                            <td>3</td>
+                            <td>¥100</td>
+                            <td>¥300</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>总计</strong></td>
+                            <td><strong>¥2,100</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h4>按零售价计算</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>商品名称</th>
+                            <th>库存数量</th>
+                            <th>零售价</th>
+                            <th>零售总额</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>钢铁侠模型玩偶</td>
+                            <td>15</td>
+                            <td>¥199</td>
+                            <td>¥2,985</td>
+                        </tr>
+                        <tr>
+                            <td>蜘蛛侠模型玩偶</td>
+                            <td>3</td>
+                            <td>¥179</td>
+                            <td>¥537</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>总计</strong></td>
+                            <td><strong>¥3,522</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div style="text-align: right;">
+                <p><strong>利润空间：¥1,422</strong></p>
+                <button class="btn" onclick="hideValueStats()" style="margin-top: 10px;">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showValueStats() {
+            document.getElementById('valueStatsModal').style.display = 'block';
+        }
+        
+        function hideValueStats() {
+            document.getElementById('valueStatsModal').style.display = 'none';
+        }
+        
+        // 点击弹窗外部关闭弹窗
+        document.getElementById('valueStatsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideValueStats();
+            }
+        });
+    </script>
+</body>
+</html>

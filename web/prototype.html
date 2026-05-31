@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>库存预备齐 - UI 设计原型 V2</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus@2.7.6/dist/index.css" />
+  <link rel="stylesheet" href="https://unpkg.com/element-plus@2.7.6/theme-chalk/dark/css-vars.css" />
+  <script src="https://unpkg.com/vue@3.4.31/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/element-plus@2.7.6/dist/index.full.min.js"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+  <style>
+    /* ====== 设计令牌 Design Tokens ====== */
+    :root {
+      --color-primary: #4F6CF7;
+      --color-primary-light: #7B93FA;
+      --color-primary-lighter: #EEF1FE;
+      --color-primary-dark: #3A54D4;
+      --color-secondary: #8B5CF6;
+      --color-success: #22C55E;
+      --color-success-light: #DCFCE7;
+      --color-warning: #F59E0B;
+      --color-warning-light: #FEF3C7;
+      --color-danger: #EF4444;
+      --color-danger-light: #FEE2E2;
+      --color-info: #64748B;
+      --color-info-light: #F1F5F9;
+
+      --color-bg: #F8FAFC;
+      --color-bg-card: #FFFFFF;
+      --color-bg-sidebar: #0F172A;
+      --color-bg-sidebar-hover: #1E293B;
+      --color-bg-sidebar-active: rgba(79, 108, 247, 0.15);
+      --color-bg-header: #FFFFFF;
+
+      --color-text-primary: #0F172A;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94A3B8;
+      --color-text-inverse: #F8FAFC;
+
+      --color-border: #E2E8F0;
+      --color-border-light: #F1F5F9;
+      --color-divider: #E2E8F0;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+
+      --sidebar-width: 240px;
+      --sidebar-collapsed: 72px;
+      --header-height: 64px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body, #app {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      color: var(--color-text-primary);
+      background: var(--color-bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ====== 布局 ====== */
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ====== 侧边栏 ====== */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--color-bg-sidebar);
+      display: flex;
+      flex-direction: column;
+      transition: width var(--transition-slow);
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+    }
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed);
+    }
+
+    .sidebar-logo {
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .sidebar-logo .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .sidebar-logo .logo-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
+    }
+    .sidebar-logo .logo-text {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--color-text-inverse);
+      white-space: nowrap;
+      opacity: 1;
+      transition: opacity var(--transition-fast);
+    }
+    .sidebar.collapsed .logo-text { opacity: 0; }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+    .sidebar-nav::-webkit-scrollbar { width: 0; }
+
+    .nav-group-title {
+      padding: 20px 24px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(148, 163, 184, 0.6);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .sidebar.collapsed .nav-group-title {
+      text-align: center;
+      padding: 20px 8px 8px;
+      font-size: 9px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px;
+      margin: 2px 8px;
+      height: 42px;
+      border-radius: var(--radius-md);
+      color: rgba(148, 163, 184, 0.8);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 450;
+    }
+    .nav-item:hover {
+      background: var(--color-bg-sidebar-hover);
+      color: var(--color-text-inverse);
+    }
+    .nav-item.active {
+      background: var(--color-bg-sidebar-active);
+      color: var(--color-primary-light);
+    }
+    .nav-item .nav-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-item .nav-icon svg { width: 20px; height: 20px; }
+    .nav-item .nav-label {
+      opacity: 1;
+      transition: opacity var(--transition-fast);
+    }
+    .sidebar.collapsed .nav-label { opacity: 0; }
+    .sidebar.collapsed .nav-item { justify-content: center; padding: 0; margin: 2px 10px; }
+
+    /* ====== 主内容区 ====== */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* ====== 顶部栏 ====== */
+    .top-header {
+      height: var(--header-height);
+      background: var(--color-bg-header);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      flex-shrink: 0;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .collapse-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--color-text-secondary);
+      transition: all var(--transition-fast);
+      border: none;
+      background: transparent;
+    }
+    .collapse-btn:hover {
+      background: var(--color-border-light);
+      color: var(--color-text-primary);
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--color-text-tertiary);
+    }
+    .breadcrumb span { color: var(--color-text-primary); font-weight: 500; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .role-switch {
+      display: flex;
+      background: var(--color-bg);
+      border-radius: var(--radius-md);
+      padding: 3px;
+      gap: 2px;
+    }
+    .role-switch-btn {
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--color-text-tertiary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-weight: 450;
+    }
+    .role-switch-btn.active {
+      background: var(--color-bg-card);
+      color: var(--color-text-primary);
+      box-shadow: var(--shadow-sm);
+      font-weight: 600;
+    }
+
+    .header-icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--color-text-secondary);
+      transition: all var(--transition-fast);
+      border: none;
+      background: transparent;
+      position: relative;
+    }
+    .header-icon-btn:hover {
+      background: var(--color-border-light);
+      color: var(--color-text-primary);
+    }
+    .header-icon-btn .badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 8px;
+      height: 8px;
+      background: var(--color-danger);
+      border-radius: 50%;
+      border: 2px solid var(--color-bg-header);
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px 4px 4px;
+      border-radius: var(--radius-xl);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+      margin-left: 4px;
+    }
+    .user-menu:hover { background: var(--color-border-light); }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .user-name {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+    }
+
+    /* ====== 页面内容 ====== */
+    .page-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* ====== 页面头部 ====== */
+    .page-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .page-title-area {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      letter-spacing: -0.3px;
+    }
+    .page-desc {
+      font-size: 14px;
+      color: var(--color-text-tertiary);
+    }
+    .page-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* ====== 统计卡片 ====== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--color-bg-card);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      border: 1px solid var(--color-border);
+      transition: all var(--transition-normal);
+      cursor: default;
+    }
+    .stat-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: transparent;
+      transform: translateY(-1px);
+    }
+    .stat-card.clickable { cursor: pointer; }
+    .stat-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .stat-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stat-card-icon svg { width: 20px; height: 20px; }
+    .stat-card-icon.primary { background: var(--color-primary-lighter); color: var(--color-primary); }
+    .stat-card-icon.success { background: var(--color-success-light); color: var(--color-success); }
+    .stat-card-icon.warning { background: var(--color-warning-light); color: var(--color-warning); }
+    .stat-card-icon.danger { background: var(--color-danger-light); color: var(--color-danger); }
+    .stat-card-label {
+      font-size: 13px;
+      color: var(--color-text-tertiary);
+      font-weight: 450;
+    }
+    .stat-card-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+    .stat-card-value.primary { color: var(--color-primary); }
+    .stat-card-value.success { color: var(--color-success); }
+    .stat-card-value.warning { color: var(--color-warning); }
+    .stat-card-value.danger { color: var(--color-danger); }
+    .stat-card-footer {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ====== 通用卡片 ====== */
+    .content-card {
+      background: var(--color-bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+      overflow: hidden;
+      transition: box-shadow var(--transition-normal);
+    }
+    .content-card:hover { box-shadow: var(--shadow-sm); }
+    .content-card-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .content-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+    .content-card-body { padding: 20px; }
+
+    /* ====== 双列布局 ====== */
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    /* ====== 分类条形图 ====== */
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+    .category-name {
+      width: 72px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .category-bar-track {
+      flex: 1;
+      height: 24px;
+      background: var(--color-border-light);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .category-bar-fill {
+      height: 100%;
+      border-radius: var(--radius-sm);
+      transition: width 0.6s ease;
+    }
+    .category-value {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      min-width: 100px;
+    }
+
+    /* ====== 待办任务 ====== */
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .task-item:hover { background: var(--color-border-light); }
+    .task-icon-wrap {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .task-icon-wrap svg { width: 18px; height: 18px; }
+    .task-icon-wrap.danger { background: var(--color-danger-light); color: var(--color-danger); }
+    .task-icon-wrap.warning { background: var(--color-warning-light); color: var(--color-warning); }
+    .task-icon-wrap.success { background: var(--color-success-light); color: var(--color-success); }
+    .task-text { flex: 1; }
+    .task-text strong { display: block; font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+    .task-text span { font-size: 12px; color: var(--color-text-tertiary); }
+    .task-arrow { color: var(--color-text-tertiary); }
+
+    /* ====== 健康排行 ====== */
+    .health-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+    }
+    .health-name { font-size: 13px; font-weight: 500; }
+    .health-bar-wrap { flex: 1; margin: 0 16px; }
+    .health-bar-track {
+      height: 6px;
+      background: var(--color-border-light);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .health-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+    .health-bar-fill.danger { background: var(--color-danger); }
+    .health-bar-fill.warning { background: var(--color-warning); }
+    .health-bar-fill.success { background: var(--color-success); }
+    .health-val { font-size: 13px; font-weight: 600; min-width: 70px; text-align: right; }
+    .health-val.danger { color: var(--color-danger); }
+    .health-val.warning { color: var(--color-warning); }
+    .health-val.success { color: var(--color-success); }
+
+    /* ====== 表格页面通用 ====== */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filter-bar .el-input { width: 240px; }
+    .filter-bar .el-select { width: 160px; }
+
+    /* ====== 扫码作业台 ====== */
+    .workbench-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+    }
+    .scan-zone {
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      background: linear-gradient(135deg, #FAFBFF 0%, #F8FAFC 100%);
+    }
+    .scan-zone-title {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 14px;
+      color: var(--color-text-primary);
+    }
+    .scan-feedback {
+      min-height: 64px;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin: 14px 0;
+      background: var(--color-border-light);
+      border: 1px solid var(--color-border);
+      transition: all var(--transition-fast);
+    }
+    .scan-feedback.success { background: var(--color-success-light); border-color: #BBF7D0; }
+    .scan-feedback.success strong { color: var(--color-success); }
+    .scan-feedback.error { background: var(--color-danger-light); border-color: #FECACA; }
+    .scan-feedback.error strong { color: var(--color-danger); }
+    .scan-feedback strong { display: block; margin-bottom: 4px; }
+    .scan-feedback span { color: var(--color-text-tertiary); font-size: 13px; }
+    .scan-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ====== 进度卡片 ====== */
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .progress-card {
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: center;
+    }
+    .progress-label { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px; }
+    .progress-val { font-size: 26px; font-weight: 700; color: var(--color-primary); }
+    .progress-val.success { color: var(--color-success); }
+    .progress-val.danger { color: var(--color-danger); }
+
+    /* ====== 自定义 Element Plus 覆盖 ====== */
+    .el-button--primary {
+      --el-button-bg-color: var(--color-primary) !important;
+      --el-button-border-color: var(--color-primary) !important;
+      --el-button-hover-bg-color: var(--color-primary-light) !important;
+      --el-button-hover-border-color: var(--color-primary-light) !important;
+    }
+    .el-card {
+      border-radius: var(--radius-lg) !important;
+      border-color: var(--color-border) !important;
+    }
+    .el-table th.el-table__cell {
+      background: var(--color-border-light) !important;
+      color: var(--color-text-secondary) !important;
+      font-weight: 600 !important;
+      font-size: 13px !important;
+    }
+    .el-table td.el-table__cell {
+      font-size: 13px !important;
+    }
+    .el-tag {
+      border-radius: var(--radius-sm) !important;
+      font-weight: 500 !important;
+    }
+    .el-dialog {
+      border-radius: var(--radius-lg) !important;
+    }
+    .el-pagination .el-pager li.is-active {
+      background-color: var(--color-primary) !important;
+    }
+
+    /* ====== 登录页 ====== */
+    .login-page {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 40%, #334155 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-page::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(79, 108, 247, 0.15) 0%, transparent 70%);
+      top: -100px;
+      right: -100px;
+    }
+    .login-page::after {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+      bottom: -80px;
+      left: -80px;
+    }
+    .login-card-new {
+      position: relative;
+      z-index: 1;
+      width: 420px;
+      padding: 48px 40px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-xl);
+      backdrop-filter: blur(20px);
+    }
+    .login-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .login-brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-brand-icon svg { width: 24px; height: 24px; fill: white; }
+    .login-brand-text {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--color-text-inverse);
+      letter-spacing: -0.5px;
+    }
+    .login-subtitle-new {
+      text-align: center;
+      color: var(--color-text-tertiary);
+      margin-bottom: 36px;
+      font-size: 14px;
+    }
+    .login-card-new .el-input__wrapper {
+      background: rgba(255, 255, 255, 0.06) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: var(--radius-md) !important;
+      box-shadow: none !important;
+    }
+    .login-card-new .el-input__inner {
+      color: var(--color-text-inverse) !important;
+    }
+    .login-card-new .el-input__inner::placeholder {
+      color: rgba(148, 163, 184, 0.6) !important;
+    }
+    .login-card-new .el-form-item__label {
+      color: rgba(148, 163, 184, 0.8) !important;
+    }
+    .login-btn {
+      width: 100%;
+      height: 48px !important;
+      border-radius: var(--radius-md) !important;
+      font-size: 16px !important;
+      font-weight: 600 !important;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+      border: none !important;
+    }
+
+    /* ====== 页面导航标签 ====== */
+    .page-nav {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 0;
+    }
+    .page-nav-tab {
+      padding: 10px 16px;
+      font-size: 14px;
+      color: var(--color-text-tertiary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-fast);
+      font-weight: 450;
+    }
+    .page-nav-tab:hover { color: var(--color-text-primary); }
+    .page-nav-tab.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    /* ====== 响应式 ====== */
+    @media (max-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .two-col-grid { grid-template-columns: 1fr; }
+      .workbench-grid { grid-template-columns: 1fr; }
+      .progress-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .page-content { padding: 16px; }
+      .page-title { font-size: 18px; }
+      .role-switch { display: none; }
+      .user-name { display: none; }
+    }
+
+    /* ====== 动效 ====== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- ========== 页面切换器 ========== -->
+  <div style="position:fixed;top:0;left:0;right:0;z-index:999;background:#0F172A;padding:8px 16px;display:flex;gap:8px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+    <span style="color:#94A3B8;font-size:12px;font-weight:600;margin-right:4px;">页面切换：</span>
+    <button v-for="p in pages" :key="p.key" @click="currentPage=p.key"
+      :style="{
+        padding:'4px 12px',borderRadius:'6px',border:'none',cursor:'pointer',
+        fontSize:'12px',fontWeight:currentPage===p.key?'600':'400',
+        background:currentPage===p.key?'#4F6CF7':'rgba(255,255,255,0.06)',
+        color:currentPage===p.key?'#fff':'#94A3B8'
+      }">{{ p.label }}</button>
+  </div>
+  <div style="height:40px"></div>
+
+  <!-- ========== 登录页 ========== -->
+  <div v-if="currentPage==='login'" class="login-page">
+    <div class="login-card-new">
+      <div class="login-brand">
+        <div class="login-brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <span class="login-brand-text">库存预备齐</span>
+      </div>
+      <p class="login-subtitle-new">智能库存管理系统</p>
+      <el-form label-position="top">
+        <el-form-item label="用户名">
+          <el-input placeholder="请输入用户名" size="large" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input type="password" placeholder="请输入密码" size="large" show-password />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" class="login-btn" size="large" @click="currentPage='dashboard'">登 录</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+  </div>
+
+  <!-- ========== 主布局框架 ========== -->
+  <div v-else class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <span class="logo-text">库存预备齐</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-group-title">日常工作</div>
+        <a class="nav-item" :class="{ active: currentPage==='dashboard' }" @click="currentPage='dashboard'">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+          <span class="nav-label">经营驾驶舱</span>
+        </a>
+        <a class="nav-item" :class="{ active: currentPage==='inbound' }" @click="currentPage='inbound'">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+          <span class="nav-label">扫码入库</span>
+        </a>
+        <a class="nav-item" :class="{ active: currentPage==='inventory' }" @click="currentPage='inventory'">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+          <span class="nav-label">扫码盘点</span>
+        </a>
+        <a class="nav-item" :class="{ active: currentPage==='stock' }" @click="currentPage='stock'">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <span class="nav-label">库存查询</span>
+        </a>
+        <a class="nav-item" :class="{ active: currentPage==='alerts' }" @click="currentPage='alerts'">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+          <span class="nav-label">预警与补货</span>
+        </a>
+        <div class="nav-group-title">基础维护</div>
+        <a class="nav-item" :class="{ active: currentPage==='products' }" @click="currentPage='products'">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>
+          <span class="nav-label">商品档案</span>
+        </a>
+        <a class="nav-item">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+          <span class="nav-label">系统管理</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- 主区域 -->
+    <div class="main-wrapper">
+      <!-- 顶部栏 -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="collapse-btn" @click="sidebarCollapsed=!sidebarCollapsed">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="breadcrumb">
+            首页 <span style="color:var(--color-text-tertiary)">/</span> <span>{{ pageTitles[currentPage] }}</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="role-switch">
+            <button class="role-switch-btn active">店主视角</button>
+            <button class="role-switch-btn">店员视角</button>
+          </div>
+          <button class="header-icon-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="badge"></span>
+          </button>
+          <div class="user-menu">
+            <div class="user-avatar">张</div>
+            <span class="user-name">张店主</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+      </header>
+
+      <!-- 页面内容区 -->
+      <div class="page-content">
+
+        <!-- ===== 经营驾驶舱 ===== -->
+        <div v-if="currentPage==='dashboard'">
+          <div class="page-top-bar">
+            <div class="page-title-area">
+              <h1 class="page-title">经营驾驶舱</h1>
+              <p class="page-desc">实时掌握库存经营状况</p>
+            </div>
+            <div class="page-actions">
+              <el-button size="default">导出报表</el-button>
+              <el-button type="primary" size="default">刷新数据</el-button>
+            </div>
+          </div>
+
+          <!-- 统计卡片 -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-label">库存成本总值</span>
+                <div class="stat-card-icon primary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+              </div>
+              <div class="stat-card-value primary">¥128,650.00</div>
+              <div class="stat-card-footer">资金占用</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-label">库存零售总值</span>
+                <div class="stat-card-icon success">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                </div>
+              </div>
+              <div class="stat-card-value success">¥215,880.00</div>
+              <div class="stat-card-footer">毛利空间约 ¥87,230.00</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-label">商品种类数</span>
+                <div class="stat-card-icon warning">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                </div>
+              </div>
+              <div class="stat-card-value">86</div>
+              <div class="stat-card-footer">在售商品</div>
+            </div>
+            <div class="stat-card clickable">
+              <div class="stat-card-header">
+                <span class="stat-card-label">库存预警</span>
+                <div class="stat-card-icon danger">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+              </div>
+              <div class="stat-card-value danger">7</div>
+              <div class="stat-card-footer">需尽快补货</div>
+            </div>
+          </div>
+
+          <!-- 双列内容 -->
+          <div class="two-col-grid">
+            <div class="content-card">
+              <div class="content-card-header">
+                <span class="content-card-title">分类库存结构</span>
+                <el-button text size="small" style="color:var(--color-text-tertiary)">查看详情</el-button>
+              </div>
+              <div class="content-card-body">
+                <div class="category-item">
+                  <span class="category-name">遥控车</span>
+                  <div class="category-bar-track"><div class="category-bar-fill" style="width:85%;background:var(--color-primary)"></div></div>
+                  <span class="category-value">320件 / ¥45,200</span>
+                </div>
+                <div class="category-item">
+                  <span class="category-name">模型</span>
+                  <div class="category-bar-track"><div class="category-bar-fill" style="width:65%;background:var(--color-success)"></div></div>
+                  <span class="category-value">240件 / ¥38,600</span>
+                </div>
+                <div class="category-item">
+                  <span class="category-name">积木</span>
+                  <div class="category-bar-track"><div class="category-bar-fill" style="width:50%;background:var(--color-warning)"></div></div>
+                  <span class="category-value">180件 / ¥25,100</span>
+                </div>
+                <div class="category-item">
+                  <span class="category-name">毛绒</span>
+                  <div class="category-bar-track"><div class="category-bar-fill" style="width:35%;background:var(--color-danger)"></div></div>
+                  <span class="category-value">120件 / ¥12,800</span>
+                </div>
+                <div class="category-item">
+                  <span class="category-name">益智</span>
+                  <div class="category-bar-track"><div class="category-bar-fill" style="width:25%;background:var(--color-secondary)"></div></div>
+                  <span class="category-value">90件 / ¥6,950</span>
+                </div>
+              </div>
+            </div>
+            <div class="content-card">
+              <div class="content-card-header">
+                <span class="content-card-title">待办与风险</span>
+              </div>
+              <div class="content-card-body" style="padding:8px 12px">
+                <div class="task-item">
+                  <div class="task-icon-wrap danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  </div>
+                  <div class="task-text">
+                    <strong>7件商品库存预警</strong>
+                    <span>低于安全库存，需补货</span>
+                  </div>
+                  <svg class="task-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+                <div class="task-item">
+                  <div class="task-icon-wrap warning">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <div class="task-text">
+                    <strong>2份盘点单待审核</strong>
+                    <span>店员已提交盘点结果</span>
+                  </div>
+                  <svg class="task-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+                <div class="task-item">
+                  <div class="task-icon-wrap success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+                  </div>
+                  <div class="task-text">
+                    <strong>3个新商品待建档</strong>
+                    <span>扫码入库但未建档商品</span>
+                  </div>
+                  <svg class="task-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 健康排行 -->
+          <div class="content-card" style="margin-bottom:24px">
+            <div class="content-card-header">
+              <span class="content-card-title">库存健康排行（低库存 Top5）</span>
+            </div>
+            <div class="content-card-body">
+              <div class="health-item">
+                <span class="health-name">F1遥控赛车 红色</span>
+                <div class="health-bar-wrap"><div class="health-bar-track"><div class="health-bar-fill danger" style="width:15%"></div></div></div>
+                <span class="health-val danger">3 / 20</span>
+              </div>
+              <div class="health-item">
+                <span class="health-name">城市警车模型</span>
+                <div class="health-bar-wrap"><div class="health-bar-track"><div class="health-bar-fill danger" style="width:25%"></div></div></div>
+                <span class="health-val danger">5 / 20</span>
+              </div>
+              <div class="health-item">
+                <span class="health-name">超级英雄积木</span>
+                <div class="health-bar-wrap"><div class="health-bar-track"><div class="health-bar-fill warning" style="width:50%"></div></div></div>
+                <span class="health-val warning">10 / 20</span>
+              </div>
+              <div class="health-item">
+                <span class="health-name">泰迪熊 大号</span>
+                <div class="health-bar-wrap"><div class="health-bar-track"><div class="health-bar-fill warning" style="width:60%"></div></div></div>
+                <span class="health-val warning">12 / 20</span>
+              </div>
+              <div class="health-item">
+                <span class="health-name">益智拼图300片</span>
+                <div class="health-bar-wrap"><div class="health-bar-track"><div class="health-bar-fill success" style="width:85%"></div></div></div>
+                <span class="health-val success">17 / 20</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 最近操作 -->
+          <div class="content-card">
+            <div class="content-card-header">
+              <span class="content-card-title">最近操作记录</span>
+            </div>
+            <div class="content-card-body" style="padding:0">
+              <el-table :data="recentOps" stripe size="small" style="width:100%">
+                <el-table-column prop="type" label="类型" width="120" />
+                <el-table-column prop="detail" label="详情" />
+                <el-table-column prop="user" label="操作人" width="100" />
+                <el-table-column prop="time" label="时间" width="170" />
+              </el-table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 商品档案 ===== -->
+        <div v-if="currentPage==='products'">
+          <div class="page-top-bar">
+            <div class="page-title-area">
+              <h1 class="page-title">商品档案</h1>
+              <p class="page-desc">管理所有商品信息</p>
+            </div>
+            <div class="page-actions">
+              <el-button type="primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                新增商品
+              </el-button>
+            </div>
+          </div>
+
+          <div class="content-card">
+            <div class="content-card-body">
+              <div class="filter-bar">
+                <el-input placeholder="搜索商品名称/SKU" clearable style="width:260px">
+                  <template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></template>
+                </el-input>
+                <el-select placeholder="选择分类" clearable style="width:160px" />
+                <el-select placeholder="商品状态" clearable style="width:120px" />
+              </div>
+
+              <el-table :data="productList" stripe style="width:100%">
+                <el-table-column prop="sku" label="SKU编码" width="130" />
+                <el-table-column prop="name" label="商品名称" min-width="160" />
+                <el-table-column prop="cat" label="分类" width="100" />
+                <el-table-column prop="cost" label="成本价" width="100" align="right" />
+                <el-table-column prop="retail" label="零售价" width="100" align="right" />
+                <el-table-column prop="stock" label="库存" width="80" align="center" />
+                <el-table-column label="状态" width="80" align="center">
+                  <template #default>
+                    <el-tag type="success" size="small">在售</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="200" fixed="right">
+                  <template #default>
+                    <el-button link type="primary" size="small">二维码</el-button>
+                    <el-button link type="primary" size="small">编辑</el-button>
+                    <el-button link type="danger" size="small">下架</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+
+              <div style="display:flex;justify-content:flex-end;margin-top:16px">
+                <el-pagination :total="86" :page-size="20" layout="total, sizes, prev, pager, next" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 扫码入库 ===== -->
+        <div v-if="currentPage==='inbound'">
+          <div class="page-top-bar">
+            <div class="page-title-area">
+              <h1 class="page-title">扫码入库</h1>
+              <p class="page-desc">扫描商品条码快速入库</p>
+            </div>
+          </div>
+
+          <div class="workbench-grid">
+            <div>
+              <div class="scan-zone">
+                <div class="scan-zone-title">扫描或输入 SKU</div>
+                <el-input placeholder="扫描条码或输入SKU编码，回车添加" size="large" clearable style="margin-bottom:14px" />
+                <div class="scan-feedback success">
+                  <strong>已添加：F1遥控赛车 红色</strong>
+                  <span>SKU RC-F1-001，当前本单数量 2</span>
+                </div>
+                <div class="scan-actions">
+                  <el-button>模拟扫码</el-button>
+                  <el-button type="danger" plain>撤销上一次</el-button>
+                  <el-button type="primary">确认入库</el-button>
+                </div>
+              </div>
+              <div style="margin-top:12px">
+                <el-input placeholder="入库备注（可选）" />
+              </div>
+            </div>
+            <div class="content-card">
+              <div class="content-card-header">
+                <span class="content-card-title">入库明细（3 项）</span>
+                <span style="font-weight:600;color:var(--color-primary)">合计：¥1,850.00</span>
+              </div>
+              <div class="content-card-body" style="padding:0">
+                <el-table :data="inboundItems" border size="small" style="width:100%">
+                  <el-table-column prop="sku" label="SKU" width="130" />
+                  <el-table-column prop="name" label="商品" min-width="140" />
+                  <el-table-column label="数量" width="130" align="center">
+                    <template #default="{ row }">
+                      <div style="display:inline-flex;align-items:center;gap:6px">
+                        <el-button size="small" circle>-</el-button>
+                        <span style="min-width:24px;text-align:center;font-weight:600">{{ row.qty }}</span>
+                        <el-button size="small" circle type="primary">+</el-button>
+                      </div>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="price" label="单价" width="100" align="right" />
+                  <el-table-column prop="total" label="小计" width="100" align="right" />
+                  <el-table-column label="" width="50">
+                    <template #default><el-button link type="danger" size="small">删</el-button></template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 扫码盘点 ===== -->
+        <div v-if="currentPage==='inventory'">
+          <div class="page-top-bar">
+            <div class="page-title-area">
+              <h1 class="page-title">扫码盘点</h1>
+              <p class="page-desc">核对实际库存与系统数据</p>
+            </div>
+            <div class="page-actions">
+              <el-button type="primary">新建盘点单</el-button>
+            </div>
+          </div>
+
+          <!-- 进度卡片 -->
+          <div class="progress-grid">
+            <div class="progress-card">
+              <div class="progress-label">应盘商品</div>
+              <div class="progress-val">24</div>
+            </div>
+            <div class="progress-card">
+              <div class="progress-label">已盘</div>
+              <div class="progress-val success">18</div>
+            </div>
+            <div class="progress-card">
+              <div class="progress-label">差异商品</div>
+              <div class="progress-val danger">3</div>
+            </div>
+            <div class="progress-card">
+              <div class="progress-label">完成度</div>
+              <div class="progress-val">75%</div>
+            </div>
+          </div>
+
+          <div class="workbench-grid">
+            <div>
+              <div class="scan-zone">
+                <div class="scan-zone-title">扫描或输入 SKU</div>
+                <el-input placeholder="扫描条码或输入SKU，回车盘点" size="large" clearable style="margin-bottom:14px" />
+                <div class="scan-feedback success">
+                  <strong>已盘点：F1遥控赛车 红色</strong>
+                  <span>系统 8，实盘 7，差异 -1</span>
+                </div>
+                <div class="scan-actions">
+                  <el-button>模拟扫码</el-button>
+                  <el-button type="primary">保存并提交</el-button>
+                </div>
+              </div>
+            </div>
+            <div class="content-card">
+              <div class="content-card-header">
+                <span class="content-card-title">盘点明细</span>
+              </div>
+              <div class="content-card-body" style="padding:0">
+                <el-table :data="checkItems" border size="small" style="width:100%">
+                  <el-table-column prop="sku" label="SKU" width="120" />
+                  <el-table-column prop="name" label="商品" min-width="120" />
+                  <el-table-column prop="sys" label="系统数" width="80" align="center" />
+                  <el-table-column prop="actual" label="实盘数" width="80" align="center">
+                    <template #default="{ row }">
+                      <span :style="{color: row.diff !== 0 ? 'var(--color-warning)' : '', fontWeight: row.diff !== 0 ? 600 : 400}">{{ row.actual || '—' }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="diff" label="差异" width="80" align="center">
+                    <template #default="{ row }">
+                      <span :style="{color: row.diff > 0 ? 'var(--color-success)' : row.diff < 0 ? 'var(--color-danger)' : '', fontWeight: 600}">{{ row.diff > 0 ? '+' : '' }}{{ row.diff }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="100">
+                    <template #default><el-button link size="small">手动录入</el-button></template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 库存查询 ===== -->
+        <div v-if="currentPage==='stock'">
+          <div class="page-top-bar">
+            <div class="page-title-area">
+              <h1 class="page-title">库存查询</h1>
+              <p class="page-desc">查看实时库存数量与价值</p>
+            </div>
+          </div>
+          <div class="content-card">
+            <div class="content-card-body">
+              <div class="filter-bar">
+                <el-input placeholder="搜索商品名称/SKU" clearable style="width:260px" />
+                <el-select placeholder="选择分类" clearable style="width:160px" />
+              </div>
+              <el-table :data="stockList" stripe style="width:100%">
+                <el-table-column prop="sku" label="SKU编码" width="130" />
+                <el-table-column prop="name" label="商品名称" min-width="160" />
+                <el-table-column prop="cat" label="分类" width="100" />
+                <el-table-column prop="cost" label="成本价" width="100" align="right" />
+                <el-table-column prop="retail" label="零售价" width="100" align="right" />
+                <el-table-column prop="stock" label="库存数量" width="100" align="center" />
+                <el-table-column label="库存金额(成本)" width="130" align="right" />
+                <el-table-column label="库存金额(零售)" width="130" align="right" />
+                <el-table-column label="预警" width="80" align="center">
+                  <template #default>
+                    <el-tag type="success" size="small">正常</el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <div style="display:flex;justify-content:flex-end;margin-top:16px">
+                <el-pagination :total="86" :page-size="20" layout="total, sizes, prev, pager, next" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 预警与补货 ===== -->
+        <div v-if="currentPage==='alerts'">
+          <div class="page-top-bar">
+            <div class="page-title-area">
+              <h1 class="page-title">预警与补货</h1>
+              <p class="page-desc">监控低库存商品，及时补货</p>
+            </div>
+            <div class="page-actions">
+              <el-button>预警设置</el-button>
+            </div>
+          </div>
+
+          <!-- 预警统计 -->
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px">
+            <div class="stat-card" style="border-left:3px solid var(--color-danger)">
+              <div class="stat-card-label">严重预警</div>
+              <div class="stat-card-value danger">3</div>
+              <div class="stat-card-footer">库存 &lt; 阈值30%</div>
+            </div>
+            <div class="stat-card" style="border-left:3px solid var(--color-warning)">
+              <div class="stat-card-label">一般预警</div>
+              <div class="stat-card-value warning">4</div>
+              <div class="stat-card-footer">库存 &lt; 阈值70%</div>
+            </div>
+            <div class="stat-card" style="border-left:3px solid var(--color-success)">
+              <div class="stat-card-label">建议补货金额</div>
+              <div class="stat-card-value">¥3,280</div>
+              <div class="stat-card-footer">按阈值补齐计算</div>
+            </div>
+          </div>
+
+          <div class="content-card">
+            <div class="content-card-body">
+              <el-table :data="alertList" stripe style="width:100%">
+                <el-table-column prop="sku" label="SKU编码" width="130" />
+                <el-table-column prop="name" label="商品名称" min-width="160" />
+                <el-table-column prop="cat" label="分类" width="100" />
+                <el-table-column label="当前库存" width="100" align="center">
+                  <template #default><span style="color:var(--color-danger);font-weight:600">3</span></template>
+                </el-table-column>
+                <el-table-column prop="threshold" label="预警阈值" width="100" align="center" />
+                <el-table-column label="缺口数量" width="100" align="center">
+                  <template #default><span style="color:var(--color-danger)">17</span></template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp, ref } = Vue
+const app = createApp({
+  setup() {
+    const currentPage = ref('dashboard')
+    const sidebarCollapsed = ref(false)
+    const pages = [
+      { key: 'login', label: '登录页' },
+      { key: 'dashboard', label: '驾驶舱' },
+      { key: 'products', label: '商品档案' },
+      { key: 'inbound', label: '扫码入库' },
+      { key: 'inventory', label: '扫码盘点' },
+      { key: 'stock', label: '库存查询' },
+      { key: 'alerts', label: '预警与补货' },
+    ]
+    const pageTitles = {
+      login: '登录',
+      dashboard: '经营驾驶舱',
+      products: '商品档案',
+      inbound: '扫码入库',
+      inventory: '扫码盘点',
+      stock: '库存查询',
+      alerts: '预警与补货',
+    }
+    const recentOps = ref([
+      { type: '入库', detail: '入库单 RK20240513001，共5件商品', user: '张店主', time: '2024-05-13 09:30' },
+      { type: '盘点', detail: '盘点单 PD20240512001 审核通过', user: '张店主', time: '2024-05-12 16:45' },
+      { type: '商品', detail: '新增商品「超级英雄积木」', user: '李店员', time: '2024-05-12 14:20' },
+    ])
+    const productList = ref([
+      { sku: 'RC-F1-001', name: 'F1遥控赛车 红色', cat: '遥控车', cost: '¥120.00', retail: '¥199.00', stock: 8 },
+      { sku: 'MD-PT-002', name: '城市警车模型', cat: '模型', cost: '¥85.00', retail: '¥148.00', stock: 5 },
+      { sku: 'BL-SH-003', name: '超级英雄积木', cat: '积木', cost: '¥65.00', retail: '¥128.00', stock: 10 },
+    ])
+    const inboundItems = ref([
+      { sku: 'RC-F1-001', name: 'F1遥控赛车 红色', qty: 2, price: '¥120.00', total: '¥240.00' },
+      { sku: 'MD-PT-002', name: '城市警车模型', qty: 5, price: '¥85.00', total: '¥425.00' },
+      { sku: 'BL-SH-003', name: '超级英雄积木', qty: 8, price: '¥65.00', total: '¥520.00' },
+    ])
+    const checkItems = ref([
+      { sku: 'RC-F1-001', name: 'F1遥控赛车 红色', sys: 8, actual: 7, diff: -1 },
+      { sku: 'MD-PT-002', name: '城市警车模型', sys: 5, actual: 5, diff: 0 },
+      { sku: 'BL-SH-003', name: '超级英雄积木', sys: 10, actual: 12, diff: 2 },
+      { sku: 'PL-300-004', name: '益智拼图300片', sys: 15, actual: null, diff: null },
+      { sku: 'TB-LG-005', name: '泰迪熊 大号', sys: 12, actual: null, diff: null },
+    ])
+    const stockList = ref([
+      { sku: 'RC-F1-001', name: 'F1遥控赛车 红色', cat: '遥控车', cost: '¥120.00', retail: '¥199.00', stock: 8 },
+      { sku: 'MD-PT-002', name: '城市警车模型', cat: '模型', cost: '¥85.00', retail: '¥148.00', stock: 5 },
+    ])
+    const alertList = ref([
+      { sku: 'RC-F1-001', name: 'F1遥控赛车 红色', cat: '遥控车', threshold: 20 },
+      { sku: 'MD-PT-002', name: '城市警车模型', cat: '模型', threshold: 20 },
+      { sku: 'TB-LG-005', name: '泰迪熊 大号', cat: '毛绒', threshold: 15 },
+    ])
+    return { currentPage, sidebarCollapsed, pages, pageTitles, recentOps, productList, inboundItems, checkItems, stockList, alertList }
+  }
+})
+app.use(ElementPlus)
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
+app.mount('#app')
+</script>
+</body>
+</html>

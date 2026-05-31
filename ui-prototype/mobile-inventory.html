@@ -1,0 +1,435 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>盘点管理 - 库存预备齐库存管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        /* 顶部导航 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: white;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .header .back-btn {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .header .add-btn {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            color: #1890ff;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            padding-top: 56px;
+            padding-bottom: 70px;
+        }
+        
+        /* 盘点单列表 */
+        .inventory-list {
+            padding: 16px;
+        }
+        
+        .inventory-item {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .inventory-item .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .inventory-item .order-no {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .inventory-item .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .status.draft {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+        
+        .status.pending {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+        
+        .status.completed {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+        
+        .inventory-item .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        
+        .inventory-item .view-btn {
+            display: block;
+            width: 100%;
+            height: 36px;
+            background: white;
+            border: 1px solid #1890ff;
+            border-radius: 4px;
+            color: #1890ff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* 新增盘点单弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+        }
+        
+        .modal.active {
+            display: block;
+        }
+        
+        .modal-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 16px 16px 0 0;
+            padding: 24px 16px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-header .close-btn {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .form-group select {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .form-group input {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .scan-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            height: 48px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 24px 0;
+            cursor: pointer;
+        }
+        
+        .submit-btn {
+            display: block;
+            width: 100%;
+            height: 48px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .nav-item.active {
+            color: #1890ff;
+        }
+        
+        .nav-item .icon {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header">
+        <svg class="back-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <h1>盘点管理</h1>
+        <svg class="add-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <div class="inventory-list">
+            <div class="inventory-item">
+                <div class="top">
+                    <div class="order-no">PD-20260428-001</div>
+                    <div class="status pending">待审核</div>
+                </div>
+                <div class="details">
+                    <div>盘点类型：临时盘点</div>
+                    <div>盘点范围：全部商品</div>
+                    <div>盘点人：张三</div>
+                    <div>2026-04-28 11:30</div>
+                </div>
+                <button class="view-btn">查看详情</button>
+            </div>
+            
+            <div class="inventory-item">
+                <div class="top">
+                    <div class="order-no">PD-20260427-001</div>
+                    <div class="status.completed">已完成</div>
+                </div>
+                <div class="details">
+                    <div>盘点类型：定期盘点</div>
+                    <div>盘点范围：模型玩偶</div>
+                    <div>盘点人：李四</div>
+                    <div>2026-04-27 16:45</div>
+                </div>
+                <button class="view-btn">查看详情</button>
+            </div>
+            
+            <div class="inventory-item">
+                <div class="top">
+                    <div class="order-no">PD-20260426-001</div>
+                    <div class="status.draft">盘点中</div>
+                </div>
+                <div class="details">
+                    <div>盘点类型：临时盘点</div>
+                    <div>盘点范围：模型汽车</div>
+                    <div>盘点人：张三</div>
+                    <div>2026-04-26 09:15</div>
+                </div>
+                <button class="view-btn">继续盘点</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 新增盘点单弹窗 -->
+    <div class="modal" id="addInventoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>新增盘点单</h2>
+                <svg class="close-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </div>
+            
+            <div class="form-group">
+                <label>盘点单号</label>
+                <input type="text" value="PD-20260428-002" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label>盘点类型</label>
+                <select>
+                    <option>临时盘点</option>
+                    <option>定期盘点</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>盘点范围</label>
+                <select>
+                    <option>全部商品</option>
+                    <option>模型玩偶</option>
+                    <option>模型汽车</option>
+                    <option>模型机器人</option>
+                </select>
+            </div>
+            
+            <button class="scan-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                </svg>
+                开始扫码盘点
+            </button>
+            
+            <button class="submit-btn">创建盘点单</button>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="bottom-nav">
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>首页</span>
+        </div>
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+            <span>库存</span>
+        </div>
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            <span>入库</span>
+        </div>
+        <div class="nav-item active">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span>盘点</span>
+        </div>
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>我的</span>
+        </div>
+    </div>
+    
+    <script>
+        // 点击新增按钮，显示弹窗
+        document.querySelector('.add-btn').addEventListener('click', function() {
+            document.getElementById('addInventoryModal').classList.add('active');
+        });
+        
+        // 点击关闭按钮，隐藏弹窗
+        document.querySelector('.close-btn').addEventListener('click', function() {
+            document.getElementById('addInventoryModal').classList.remove('active');
+        });
+        
+        // 点击模态框背景，隐藏弹窗
+        document.getElementById('addInventoryModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

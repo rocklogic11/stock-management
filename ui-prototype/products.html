@@ -1,0 +1,203 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品管理 - 库存预备齐</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
+        
+        .page-container { padding: 20px; }
+        .page-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+        
+        .btn-group { margin-bottom: 20px; }
+        .btn { display: inline-block; padding: 8px 16px; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        .btn-secondary { background: #fff; color: #333; border: 1px solid #ddd; }
+        
+        .filter-bar { background: #fff; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .filter-input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-right: 10px; }
+        
+        .table { width: 100%; border-collapse: collapse; background: #fff; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f9f9f9; font-weight: 600; }
+        
+        /* 弹窗样式 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal.show { display: flex; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 8px; width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .form-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .modal-buttons { margin-top: 20px; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <h2 class="page-title">商品管理</h2>
+        
+        <!-- 按钮组 -->
+        <div class="btn-group">
+            <button class="btn" onclick="showAddModal()">新增商品</button>
+            <button class="btn btn-secondary">批量导入</button>
+            <button class="btn btn-secondary">生成二维码</button>
+        </div>
+        
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+            <input type="text" class="filter-input" placeholder="搜索商品名称/SKU">
+            <select class="filter-input">
+                <option>全部分类</option>
+                <option>模型玩偶</option>
+                <option>模型汽车</option>
+                <option>模型机器人</option>
+            </select>
+            <select class="filter-input">
+                <option>全部状态</option>
+                <option>在售</option>
+                <option>下架</option>
+            </select>
+            <button class="btn">搜索</button>
+        </div>
+        
+        <!-- 商品列表 -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>商品名称</th>
+                    <th>分类</th>
+                    <th>当前库存</th>
+                    <th>加权平均成本</th>
+                    <th>零售价</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>KW-TOY-001</td>
+                    <td>钢铁侠模型玩偶</td>
+                    <td>模型玩偶</td>
+                    <td>15</td>
+                    <td>¥120</td>
+                    <td>¥199</td>
+                    <td>在售</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="showEditModal()">编辑</button>
+                        <button class="btn btn-secondary">下架</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>KW-TOY-002</td>
+                    <td>蜘蛛侠模型玩偶</td>
+                    <td>模型玩偶</td>
+                    <td>8</td>
+                    <td>¥100</td>
+                    <td>¥179</td>
+                    <td>在售</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="showEditModal()">编辑</button>
+                        <button class="btn btn-secondary">下架</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>KW-TOY-003</td>
+                    <td>闪电麦昆模型汽车</td>
+                    <td>模型汽车</td>
+                    <td>0</td>
+                    <td>¥80</td>
+                    <td>¥129</td>
+                    <td>在售</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="showEditModal()">编辑</button>
+                        <button class="btn btn-secondary">下架</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- 新增/编辑商品弹窗 -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="modalTitle">新增商品</h3>
+            <form id="productForm">
+                <div class="form-group">
+                    <label class="form-label">商品名称 *</label>
+                    <input type="text" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">商品分类 *</label>
+                    <select class="form-select" required>
+                        <option value="">请选择</option>
+                        <option>模型玩偶</option>
+                        <option>模型汽车</option>
+                        <option>模型机器人</option>
+                        <option>其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">进货成本价 *</label>
+                    <input type="number" class="form-input" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">零售价 *</label>
+                    <input type="number" class="form-input" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">库存预警阈值</label>
+                    <input type="number" class="form-input" value="0">
+                    <small style="color: #666;">设置为0表示不预警</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">商品图片</label>
+                    <input type="file" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">商品描述</label>
+                    <textarea class="form-input" rows="3"></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="hideModal()">取消</button>
+                    <button type="submit" class="btn">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function showAddModal() {
+            document.getElementById('modalTitle').textContent = '新增商品';
+            document.getElementById('productForm').reset();
+            document.getElementById('productModal').classList.add('show');
+        }
+        
+        function showEditModal() {
+            document.getElementById('modalTitle').textContent = '编辑商品';
+            // 这里应该填充商品数据（实际开发中从后端获取）
+            document.getElementById('productModal').classList.add('show');
+        }
+        
+        function hideModal() {
+            document.getElementById('productModal').classList.remove('show');
+        }
+        
+        // 点击弹窗外部关闭弹窗
+        document.getElementById('productModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+        
+        // 表单提交
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('保存成功！');
+            hideModal();
+        });
+    </script>
+</body>
+</html>

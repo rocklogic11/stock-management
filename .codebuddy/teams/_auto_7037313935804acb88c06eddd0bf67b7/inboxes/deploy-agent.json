@@ -1,0 +1,20 @@
+[
+  {
+    "id": "msg-1778248079848-0zbaj2",
+    "from": "team-lead",
+    "to": "deploy-agent",
+    "type": "message",
+    "content": "部署进展如何？请汇报当前状态和遇到的问题。",
+    "timestamp": "2026-05-08T13:47:59.848Z",
+    "read": true
+  },
+  {
+    "id": "msg-1778248083475-qprnds",
+    "from": "team-lead",
+    "to": "deploy-agent",
+    "type": "message",
+    "content": "请汇报部署进度和结果",
+    "timestamp": "2026-05-08T13:48:03.475Z",
+    "read": true
+  }
+]

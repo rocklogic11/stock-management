@@ -1,0 +1,400 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>智能分析 - 库存预备齐库存管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        /* 顶部导航 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: white;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .header .back-btn {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        /* 标签页 */
+        .tabs {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: white;
+            display: flex;
+            border-bottom: 1px solid #eee;
+            z-index: 99;
+        }
+        
+        .tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            color: #1890ff;
+            border-bottom-color: #1890ff;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            padding-top: 104px;
+            padding-bottom: 70px;
+        }
+        
+        /* 预警列表 */
+        .alert-list {
+            padding: 16px;
+        }
+        
+        .alert-item {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid #faad14;
+        }
+        
+        .alert-item.danger {
+            border-left-color: #f5222d;
+        }
+        
+        .alert-item .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .alert-item .name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .alert-item .stock-qty {
+            font-size: 14px;
+            color: #faad14;
+            font-weight: 600;
+        }
+        
+        .alert-item.danger .stock-qty {
+            color: #f5222d;
+        }
+        
+        .alert-item .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .alert-item .action-btn {
+            display: block;
+            width: 100%;
+            height: 36px;
+            margin-top: 12px;
+            background: white;
+            border: 1px solid #1890ff;
+            border-radius: 4px;
+            color: #1890ff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* 进货建议列表 */
+        .suggestion-list {
+            padding: 16px;
+        }
+        
+        .suggestion-item {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .suggestion-item .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .suggestion-item .name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .suggestion-item .suggested-qty {
+            font-size: 14px;
+            color: #1890ff;
+            font-weight: 600;
+        }
+        
+        .suggestion-item .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        
+        .suggestion-item .action-btn {
+            display: block;
+            width: 100%;
+            height: 36px;
+            background: #1890ff;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .nav-item.active {
+            color: #1890ff;
+        }
+        
+        .nav-item .icon {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header">
+        <svg class="back-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <h1>智能分析</h1>
+    </div>
+    
+    <!-- 标签页 -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('alert')">库存预警</div>
+        <div class="tab" onclick="switchTab('suggestion')">进货建议</div>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 库存预警列表 -->
+        <div class="alert-list" id="alertList">
+            <div class="alert-item danger">
+                <div class="top">
+                    <div class="name">蝙蝠侠模型玩偶</div>
+                    <div class="stock-qty">库存：2</div>
+                </div>
+                <div class="details">
+                    <div>预警阈值：5</div>
+                    <div>日均销量：3</div>
+                    <div>可售天数：0.7天</div>
+                    <div>建议进货：13</div>
+                </div>
+                <button class="action-btn">标记已处理</button>
+            </div>
+            
+            <div class="alert-item">
+                <div class="top">
+                    <div class="name">蜘蛛侠模型玩偶</div>
+                    <div class="stock-qty">库存：8</div>
+                </div>
+                <div class="details">
+                    <div>预警阈值：10</div>
+                    <div>日均销量：2</div>
+                    <div>可售天数：4天</div>
+                    <div>建议进货：12</div>
+                </div>
+                <button class="action-btn">标记已处理</button>
+            </div>
+            
+            <div class="alert-item">
+                <div class="top">
+                    <div class="name">美国队长模型玩偶</div>
+                    <div class="stock-qty">库存：5</div>
+                </div>
+                <div class="details">
+                    <div>预警阈值：5</div>
+                    <div>日均销量：1</div>
+                    <div>可售天数：5天</div>
+                    <div>建议进货：5</div>
+                </div>
+                <button class="action-btn">标记已处理</button>
+            </div>
+        </div>
+        
+        <!-- 进货建议列表 -->
+        <div class="suggestion-list" id="suggestionList" style="display: none;">
+            <div class="suggestion-item">
+                <div class="top">
+                    <div class="name">蝙蝠侠模型玩偶</div>
+                    <div class="suggested-qty">建议进货：13</div>
+                </div>
+                <div class="details">
+                    <div>当前库存：2</div>
+                    <div>日均销量：3</div>
+                    <div>可售天数：0.7天</div>
+                    <div>进货周期：10天</div>
+                </div>
+                <button class="action-btn">生成进货单</button>
+            </div>
+            
+            <div class="suggestion-item">
+                <div class="top">
+                    <div class="name">蜘蛛侠模型玩偶</div>
+                    <div class="suggested-qty">建议进货：12</div>
+                </div>
+                <div class="details">
+                    <div>当前库存：8</div>
+                    <div>日均销量：2</div>
+                    <div>可售天数：4天</div>
+                    <div>进货周期：10天</div>
+                </div>
+                <button class="action-btn">生成进货单</button>
+            </div>
+            
+            <div class="suggestion-item">
+                <div class="top">
+                    <div class="name">钢铁侠模型玩偶</div>
+                    <div class="suggested-qty">建议进货：5</div>
+                </div>
+                <div class="details">
+                    <div>当前库存：25</div>
+                    <div>日均销量：2</div>
+                    <div>可售天数：12.5天</div>
+                    <div>进货周期：10天</div>
+                </div>
+                <button class="action-btn">生成进货单</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="bottom-nav">
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>首页</span>
+        </div>
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+            <span>库存</span>
+        </div>
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            <span>入库</span>
+        </div>
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span>盘点</span>
+        </div>
+        <div class="nav-item active">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>我的</span>
+        </div>
+    </div>
+    
+    <script>
+        // 切换标签页
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            const alertList = document.getElementById('alertList');
+            const suggestionList = document.getElementById('suggestionList');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            if (tabName === 'alert') {
+                tabs[0].classList.add('active');
+                alertList.style.display = 'block';
+                suggestionList.style.display = 'none';
+            } else {
+                tabs[1].classList.add('active');
+                alertList.style.display = 'none';
+                suggestionList.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

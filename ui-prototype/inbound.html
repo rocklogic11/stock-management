@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>入库管理 - 库存预备齐</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
+        
+        .page-container { padding: 20px; }
+        .page-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+        
+        .btn-group { margin-bottom: 20px; }
+        .btn { display: inline-block; padding: 8px 16px; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        .btn-secondary { background: #fff; color: #333; border: 1px solid #ddd; }
+        
+        .table { width: 100%; border-collapse: collapse; background: #fff; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f9f9f9; font-weight: 600; }
+        
+        /* 入库单详情弹窗 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal.show { display: flex; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 8px; width: 700px; max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-buttons { margin-top: 20px; text-align: right; }
+        
+        /* 扫码区域 */
+        .scan-area { background: #f9f9f9; padding: 20px; border-radius: 4px; margin-bottom: 20px; text-align: center; }
+        .scan-input { width: 300px; padding: 10px; font-size: 16px; text-align: center; border: 2px dashed #ddd; background: #fff; }
+        
+        /* 入库单明细表格 */
+        .detail-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .detail-table th, .detail-table td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <h2 class="page-title">入库管理</h2>
+        
+        <!-- 按钮组 -->
+        <div class="btn-group">
+            <button class="btn" onclick="showAddModal()">新增入库单</button>
+        </div>
+        
+        <!-- 入库单列表 -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>入库单号</th>
+                    <th>日期</th>
+                    <th>操作人</th>
+                    <th>商品数量</th>
+                    <th>总金额</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>RK-20260428-001</td>
+                    <td>2026-04-28</td>
+                    <td>店员A</td>
+                    <td>3</td>
+                    <td>¥1,200</td>
+                    <td>已提交</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="showDetailModal()">查看</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>RK-20260427-001</td>
+                    <td>2026-04-27</td>
+                    <td>店员A</td>
+                    <td>5</td>
+                    <td>¥800</td>
+                    <td>已提交</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="showDetailModal()">查看</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- 新增入库单弹窗 -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">新增入库单</h3>
+            <form id="addForm">
+                <div class="scan-area">
+                    <p style="margin-bottom: 10px; color: #666;">请使用扫码枪扫描商品二维码</p>
+                    <input type="text" class="scan-input" placeholder="扫码区域（自动获取焦点）" autofocus>
+                    <p style="margin-top: 10px; font-size: 12px; color: #999;">提示：扫码枪会自动回车，无需手动提交</p>
+                </div>
+                
+                <h4>入库单明细</h4>
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>商品SKU</th>
+                            <th>商品名称</th>
+                            <th>数量</th>
+                            <th>进货单价</th>
+                            <th>金额</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>KW-TOY-001</td>
+                            <td>钢铁侠模型玩偶</td>
+                            <td><input type="number" value="1" style="width: 60px; padding: 5px;"></td>
+                            <td><input type="number" value="120" step="0.01" style="width: 80px; padding: 5px;"></td>
+                            <td>¥120</td>
+                            <td><button type="button" class="btn btn-secondary" style="padding: 5px 10px;">删除</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 15px; text-align: right;">
+                    <strong>合计金额：¥1,200</strong>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddModal()">取消</button>
+                    <button type="submit" class="btn">提交入库</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 入库单详情弹窗 -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">入库单详情</h3>
+            <div style="margin-bottom: 15px;">
+                <p><strong>入库单号：</strong>RK-20260428-001</p>
+                <p><strong>入库日期：</strong>2026-04-28</p>
+                <p><strong>操作人：</strong>店员A</p>
+                <p><strong>状态：</strong>已提交</p>
+            </div>
+            
+            <h4>入库明细</h4>
+            <table class="detail-table">
+                <thead>
+                    <tr>
+                        <th>商品SKU</th>
+                        <th>商品名称</th>
+                        <th>数量</th>
+                        <th>进货单价</th>
+                        <th>金额</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>KW-TOY-001</td>
+                        <td>钢铁侠模型玩偶</td>
+                        <td>10</td>
+                        <td>¥120</td>
+                        <td>¥1,200</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 15px; text-align: right;">
+                <strong>合计金额：¥1,200</strong>
+            </div>
+            
+            <div class="modal-buttons">
+                <button type="button" class="btn" onclick="hideDetailModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showAddModal() {
+            document.getElementById('addModal').classList.add('show');
+        }
+        
+        function hideAddModal() {
+            document.getElementById('addModal').classList.remove('show');
+        }
+        
+        function showDetailModal() {
+            document.getElementById('detailModal').classList.add('show');
+        }
+        
+        function hideDetailModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+        
+        // 点击弹窗外部关闭弹窗
+        document.getElementById('addModal').addEventListener('click', function(e) {
+            if (e.target === this) hideAddModal();
+        });
+        
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) hideDetailModal();
+        });
+        
+        // 表单提交
+        document.getElementById('addForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('入库成功！');
+            hideAddModal();
+        });
+        
+        // 模拟扫码枪输入（回车自动添加商品）
+        document.querySelector('.scan-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                alert('扫码成功！已添加商品：钢铁侠模型玩偶');
+                // 实际开发中，这里会根据扫码内容查询商品，然后添加到明细表格
+            }
+        });
+    </script>
+</body>
+</html>

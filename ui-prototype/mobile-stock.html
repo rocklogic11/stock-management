@@ -1,0 +1,404 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>库存查询 - 库存预备齐库存管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        /* 顶部导航 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: white;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .header .back-btn {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .header .search-btn {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            padding-top: 56px;
+            padding-bottom: 70px;
+        }
+        
+        /* 统计卡片 */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card .label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1890ff;
+        }
+        
+        .stat-card:nth-child(2) .value {
+            color: #52c41a;
+        }
+        
+        .stat-card:nth-child(3) .value {
+            color: #faad14;
+        }
+        
+        .stat-card:nth-child(4) .value {
+            color: #f5222d;
+        }
+        
+        /* 搜索栏 */
+        .search-bar {
+            padding: 0 16px 16px;
+        }
+        
+        .search-input {
+            width: 100%;
+            height: 40px;
+            padding: 0 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        /* 筛选标签 */
+        .filter-tabs {
+            display: flex;
+            padding: 0 16px 16px;
+            gap: 8px;
+            overflow-x: auto;
+        }
+        
+        .filter-tab {
+            padding: 6px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        
+        .filter-tab.active {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+        
+        /* 库存列表 */
+        .stock-list {
+            padding: 0 16px;
+        }
+        
+        .stock-item {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stock-item .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .stock-item .name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .stock-item .code {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        
+        .stock-item .quantity {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1890ff;
+        }
+        
+        .stock-item .quantity.warning {
+            color: #faad14;
+        }
+        
+        .stock-item .quantity.danger {
+            color: #f5222d;
+        }
+        
+        .stock-item .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .stock-item .detail-item .label {
+            color: #999;
+        }
+        
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .nav-item.active {
+            color: #1890ff;
+        }
+        
+        .nav-item .icon {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header">
+        <svg class="back-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <h1>库存查询</h1>
+        <svg class="search-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+        </svg>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 统计卡片 -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="label">总库存价值(成本)</div>
+                <div class="value">¥128,500</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">总库存价值(零售)</div>
+                <div class="value">¥257,000</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">商品种类</div>
+                <div class="value">156</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">预警商品</div>
+                <div class="value">8</div>
+            </div>
+        </div>
+        
+        <!-- 搜索栏 -->
+        <div class="search-bar">
+            <input type="text" class="search-input" placeholder="搜索商品名称或编码">
+        </div>
+        
+        <!-- 筛选标签 -->
+        <div class="filter-tabs">
+            <div class="filter-tab active">全部</div>
+            <div class="filter-tab">正常</div>
+            <div class="filter-tab">低库存</div>
+            <div class="filter-tab">缺货</div>
+        </div>
+        
+        <!-- 库存列表 -->
+        <div class="stock-list">
+            <div class="stock-item">
+                <div class="top">
+                    <div>
+                        <div class="name">钢铁侠模型玩偶</div>
+                        <div class="code">KW-TOY-001</div>
+                    </div>
+                    <div class="quantity">25</div>
+                </div>
+                <div class="details">
+                    <div class="detail-item">
+                        <span class="label">成本价：</span>
+                        <span>¥150</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">零售价：</span>
+                        <span>¥300</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">库存价值：</span>
+                        <span>¥3,750</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">最后更新：</span>
+                        <span>2026-04-28</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stock-item">
+                <div class="top">
+                    <div>
+                        <div class="name">蜘蛛侠模型玩偶</div>
+                        <div class="code">KW-TOY-002</div>
+                    </div>
+                    <div class="quantity warning">8</div>
+                </div>
+                <div class="details">
+                    <div class="detail-item">
+                        <span class="label">成本价：</span>
+                        <span>¥120</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">零售价：</span>
+                        <span>¥240</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">库存价值：</span>
+                        <span>¥960</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">最后更新：</span>
+                        <span>2026-04-27</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stock-item">
+                <div class="top">
+                    <div>
+                        <div class="name">蝙蝠侠模型玩偶</div>
+                        <div class="code">KW-TOY-003</div>
+                    </div>
+                    <div class="quantity danger">2</div>
+                </div>
+                <div class="details">
+                    <div class="detail-item">
+                        <span class="label">成本价：</span>
+                        <span>¥180</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">零售价：</span>
+                        <span>¥360</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">库存价值：</span>
+                        <span>¥360</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">最后更新：</span>
+                        <span>2026-04-26</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="bottom-nav">
+        <div class="nav-item active">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>首页</span>
+        </div>
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+            <span>库存</span>
+        </div>
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+            </svg>
+            <span>入库</span>
+        </div>
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span>盘点</span>
+        </div>
+        <div class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>我的</span>
+        </div>
+    </div>
+</body>
+</html>

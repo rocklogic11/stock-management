@@ -1,0 +1,163 @@
+{
+  "dataPreparation": {
+    "duration": 0,
+    "categories": 10,
+    "products": 1000,
+    "orders": 50
+  },
+  "singleRequests": [
+    {
+      "name": "健康检查",
+      "avgDuration": 4,
+      "minDuration": 2,
+      "maxDuration": 8,
+      "path": "/health"
+    },
+    {
+      "name": "商品列表(100条)",
+      "avgDuration": 18,
+      "minDuration": 12,
+      "maxDuration": 28,
+      "path": "/products?page=1&pageSize=100"
+    },
+    {
+      "name": "商品列表(500条)",
+      "avgDuration": 14,
+      "minDuration": 13,
+      "maxDuration": 15,
+      "path": "/products?page=1&pageSize=500"
+    },
+    {
+      "name": "商品列表(1000条)",
+      "avgDuration": 15,
+      "minDuration": 12,
+      "maxDuration": 21,
+      "path": "/products?page=1&pageSize=1000"
+    },
+    {
+      "name": "分类列表",
+      "avgDuration": 7,
+      "minDuration": 7,
+      "maxDuration": 7,
+      "path": "/categories"
+    },
+    {
+      "name": "入库单列表",
+      "avgDuration": 11,
+      "minDuration": 10,
+      "maxDuration": 13,
+      "path": "/inbound-orders?page=1&pageSize=100"
+    },
+    {
+      "name": "库存查询",
+      "avgDuration": 2,
+      "minDuration": 2,
+      "maxDuration": 2,
+      "path": "/inventory/stock?page=1&pageSize=100"
+    },
+    {
+      "name": "仪表盘统计",
+      "avgDuration": 2,
+      "minDuration": 1,
+      "maxDuration": 3,
+      "path": "/dashboard/stats"
+    }
+  ],
+  "concurrentTests": [
+    {
+      "concurrentLevel": 10,
+      "totalDuration": 121,
+      "successCount": 10,
+      "failCount": 0,
+      "avgDuration": 98,
+      "minDuration": 79,
+      "maxDuration": 121,
+      "qps": 83
+    },
+    {
+      "concurrentLevel": 50,
+      "totalDuration": 747,
+      "successCount": 50,
+      "failCount": 0,
+      "avgDuration": 670,
+      "minDuration": 601,
+      "maxDuration": 746,
+      "qps": 67
+    },
+    {
+      "concurrentLevel": 100,
+      "totalDuration": 966,
+      "successCount": 100,
+      "failCount": 0,
+      "avgDuration": 829,
+      "minDuration": 701,
+      "maxDuration": 959,
+      "qps": 104
+    },
+    {
+      "concurrentLevel": 200,
+      "totalDuration": 1874,
+      "successCount": 200,
+      "failCount": 0,
+      "avgDuration": 1578,
+      "minDuration": 1046,
+      "maxDuration": 1863,
+      "qps": 107
+    }
+  ],
+  "largeDataTests": [
+    {
+      "name": "全量商品查询(不分页)",
+      "avgDuration": 15,
+      "p95Duration": 22,
+      "path": "/products?page=1&pageSize=10000"
+    },
+    {
+      "name": "商品搜索(关键词)",
+      "avgDuration": 23,
+      "p95Duration": 37,
+      "path": "/products?keyword=性能测试&page=1&pageSize=100"
+    },
+    {
+      "name": "按分类筛选",
+      "avgDuration": 21,
+      "p95Duration": 46,
+      "path": "/products?category_id=1&page=1&pageSize=100"
+    },
+    {
+      "name": "库存预警查询",
+      "avgDuration": 6,
+      "p95Duration": 13,
+      "path": "/inventory/alerts"
+    },
+    {
+      "name": "入库单详情查询",
+      "avgDuration": 18,
+      "p95Duration": 30,
+      "path": "/inbound-orders?page=1&pageSize=100"
+    }
+  ],
+  "writeTests": [
+    {
+      "name": "单条商品创建",
+      "totalDuration": 31,
+      "avgPerRecord": 31,
+      "successCount": 1,
+      "failCount": 0
+    },
+    {
+      "name": "批量商品创建(10条)",
+      "totalDuration": 250,
+      "avgPerRecord": 25,
+      "successCount": 10,
+      "failCount": 0
+    },
+    {
+      "name": "批量商品创建(50条)",
+      "totalDuration": 1045,
+      "avgPerRecord": 21,
+      "successCount": 50,
+      "failCount": 0
+    }
+  ]
+}

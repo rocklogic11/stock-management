@@ -1,0 +1,288 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统管理 - 库存预备齐</title>
+    <style>
+        * { margin:0; padding:0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
+        
+        .page-container { padding: 20px; }
+        .page-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+        
+        .btn-group { margin-bottom: 20px; }
+        .btn { display: inline-block; padding: 8px 16px; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        .btn-secondary { background: #fff; color: #333; border: 1px solid #ddd; }
+        .btn.active { background: #333; }
+        
+        .table { width: 100%; border-collapse: collapse; background: #fff; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f9f9f9; font-weight: 600; }
+        
+        /* 区域切换 */
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        /* 弹窗样式 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal.show { display: flex; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 8px; width: 500px; }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-buttons { margin-top: 20px; text-align: right; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .form-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        /* 权限配置 */
+        .permission-group { margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px; padding: 15px; }
+        .permission-title { font-weight: 600; margin-bottom: 10px; }
+        .permission-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <h2 class="page-title">系统管理</h2>
+        
+        <!-- 按钮组（切换日志/权限） -->
+        <div class="btn-group">
+            <button class="btn active" onclick="showSection('log')">操作日志</button>
+            <button class="btn btn-secondary" onclick="showSection('permission')">权限管理</button>
+        </div>
+        
+        <!-- 操作日志 -->
+        <div id="logSection" class="section active">
+            <h3 style="margin-bottom: 15px;">操作日志</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>操作时间</th>
+                        <th>操作人</th>
+                        <th>操作类型</th>
+                        <th>操作详情</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2026-04-28 10:30:00</td>
+                        <td>店员A</td>
+                        <td>入库操作</td>
+                        <td>入库单 RK-20260428-001，入库钢铁侠 x 10</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-28 14:20:00</td>
+                        <td>店主</td>
+                        <td>盘点审核</td>
+                        <td>审核通过盘点单 PD-20260428-001，调整库存 -1</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-27 09:00:00</td>
+                        <td>店主</td>
+                        <td>权限变更</td>
+                        <td>修改店员A权限：增加"库存查询"权限</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 权限管理 -->
+        <div id="permissionSection" class="section">
+            <h3 style="margin-bottom: 15px;">权限管理</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>用户名</th>
+                        <th>角色</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>店主</td>
+                        <td>店主</td>
+                        <td>启用</td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="showPermissionModal('店主')">查看权限</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>店员A</td>
+                        <td>店员</td>
+                        <td>启用</td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="showPermissionModal('店员A')">编辑权限</button>
+                            <button class="btn btn-secondary" style="padding: 5px 10px;">禁用</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="showAddUserModal()">新增用户</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 权限配置弹窗 -->
+    <div id="permissionModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">权限配置 - <span id="permissionUserName"></span></h3>
+            <form id="permissionForm">
+                <div class="permission-group">
+                    <div class="permission-title">商品管理</div>
+                    <div class="permission-item">
+                        <span>商品信息维护</span>
+                        <select class="form-select" style="width: 120px;">
+                            <option>无权限</option>
+                            <option>查看</option>
+                            <option selected>编辑</option>
+                        </select>
+                    </div>
+                    <div class="permission-item">
+                        <span>二维码生成与打印</span>
+                        <select class="form-select" style="width: 120px;">
+                            <option>无权限</option>
+                            <option selected>操作</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="permission-group">
+                    <div class="permission-title">入库管理</div>
+                    <div class="permission-item">
+                        <span>商品入库</span>
+                        <select class="form-select" style="width: 120px;">
+                            <option>无权限</option>
+                            <option selected>操作</option>
+                            <option>审核</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="permission-group">
+                    <div class="permission-title">盘点管理</div>
+                    <div class="permission-item">
+                        <span>库存盘点</span>
+                        <select class="form-select" style="width: 120px;">
+                            <option>无权限</option>
+                            <option selected>操作</option>
+                            <option>审核</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="permission-group">
+                    <div class="permission-title">库存查询</div>
+                    <div class="permission-item">
+                        <span>实时库存查询</span>
+                        <select class="form-select" style="width: 120px;">
+                            <option>无权限</option>
+                            <option selected>查看</option>
+                        </select>
+                    </div>
+                    <div class="permission-item">
+                        <span>库存价值统计</span>
+                        <select class="form-select" style="width: 120px;">
+                            <option selected>无权限</option>
+                            <option>查看</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="hidePermissionModal()">取消</button>
+                    <button type="submit" class="btn">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 新增用户弹窗 -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">新增用户</h3>
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label class="form-label">用户名 *</label>
+                    <input type="text" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码 *</label>
+                    <input type="password" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">确认密码 *</label>
+                    <input type="password" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">角色 *</label>
+                    <select class="form-select" required>
+                        <option value="">请选择</option>
+                        <option>店主</option>
+                        <option>店员</option>
+                        <option>自定义角色</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddUserModal()">取消</button>
+                    <button type="submit" class="btn">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function showSection(sectionName) {
+            // 隐藏所有区域
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+            
+            // 显示选中的区域
+            document.getElementById(sectionName + 'Section').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function showPermissionModal(userName) {
+            document.getElementById('permissionUserName').textContent = userName;
+            document.getElementById('permissionModal').classList.add('show');
+        }
+        
+        function hidePermissionModal() {
+            document.getElementById('permissionModal').classList.remove('show');
+        }
+        
+        function showAddUserModal() {
+            document.getElementById('addUserModal').classList.add('show');
+        }
+        
+        function hideAddUserModal() {
+            document.getElementById('addUserModal').classList.remove('show');
+        }
+        
+        // 点击弹窗外部关闭弹窗
+        ['permissionModal', 'addUserModal'].forEach(id => {
+            document.getElementById(id).addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+        
+        // 表单提交
+        document.getElementById('permissionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('权限保存成功！');
+            hidePermissionModal();
+        });
+        
+        document.getElementById('addUserForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('用户添加成功！');
+            hideAddUserModal();
+        });
+    </script>
+</body>
+</html>

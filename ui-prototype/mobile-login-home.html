@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>库存预备齐 - 手机端</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; background: #f5f5f5; }
+        
+        /* 手机端容器 */
+        .mobile-container { max-width: 375px; margin: 0 auto; min-height: 100vh; background: #fff; }
+        
+        /* 登录页 */
+        .login-page { padding: 60px 30px; }
+        .login-title { font-size: 24px; font-weight: 600; text-align: center; margin-bottom: 40px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+        .btn { display: block; width: 100%; padding: 12px; background: #000; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        
+        /* 首页 */
+        .home-page { display: none; }
+        .header { background: #000; color: #fff; padding: 15px; text-align: center; font-size: 18px; font-weight: 600; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
+        .stat-card { background: #fff; padding: 15px; border-radius: 4px; border: 1px solid #ddd; }
+        .stat-value { font-size: 20px; font-weight: 600; margin: 5px 0; }
+        .stat-label { font-size: 12px; color: #666; }
+        
+        /* 功能菜单 */
+        .menu { padding: 15px; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; cursor: pointer; }
+        .menu-item:active { background: #f9f9f9; }
+        .menu-title { font-weight: 500; }
+        .menu-arrow { color: #999; }
+        
+        /* 底部导航 */
+        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 375px; margin: 0 auto; background: #fff; border-top: 1px solid #ddd; display: flex; }
+        .tab-item { flex: 1; text-align: center; padding: 10px; font-size: 12px; cursor: pointer; }
+        .tab-item.active { color: #000; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- 登录页 -->
+        <div id="loginPage" class="login-page">
+            <h1 class="login-title">库存预备齐</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-input" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-input" placeholder="请输入密码">
+                </div>
+                <button type="submit" class="btn">登录</button>
+            </form>
+        </div>
+        
+        <!-- 首页 -->
+        <div id="homePage" class="home-page">
+            <div class="header">库存预备齐</div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">总商品数</div>
+                    <div class="stat-value">156</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">库存预警</div>
+                    <div class="stat-value" style="color: #f00;">8</div>
+                </div>
+            </div>
+            
+            <div class="menu">
+                <div class="menu-item" onclick="showPage('stockPage')">
+                    <span class="menu-title">库存查询</span>
+                    <span class="menu-arrow">></span>
+                </div>
+                <div class="menu-item" onclick="showPage('inboundPage')">
+                    <span class="menu-title">入库管理</span>
+                    <span class="menu-arrow">></span>
+                </div>
+                <div class="menu-item" onclick="showPage('inventoryPage')">
+                    <span class="menu-title">盘点管理</span>
+                    <span class="menu-arrow">></span>
+                </div>
+                <div class="menu-item" onclick="showPage('analyticsPage')">
+                    <span class="menu-title">智能分析</span>
+                    <span class="menu-arrow">></span>
+                </div>
+            </div>
+            
+            <div class="tab-bar">
+                <div class="tab-item active">首页</div>
+                <div class="tab-item" onclick="showPage('stockPage')">库存</div>
+                <div class="tab-item" onclick="showPage('analyticsPage')">分析</div>
+                <div class="tab-item">我的</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 登录功能
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('homePage').style.display = 'block';
+        });
+        
+        // 页面切换
+        function showPage(pageId) {
+            // 这里简单演示，实际应该有多个页面
+            alert('跳转到：' + pageId);
+        }
+    </script>
+</body>
+</html>

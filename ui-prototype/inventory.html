@@ -1,0 +1,288 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>盘点管理 - 库存预备齐</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
+        
+        .page-container { padding: 20px; }
+        .page-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+        
+        .btn-group { margin-bottom: 20px; }
+        .btn { display: inline-block; padding: 8px 16px; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        .btn-secondary { background: #fff; color: #333; border: 1px solid #ddd; }
+        
+        .table { width: 100%; border-collapse: collapse; background: #fff; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f9f9f9; font-weight: 600; }
+        
+        /* 弹窗样式 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal.show { display: flex; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 8px; width: 700px; max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-buttons { margin-top: 20px; text-align: right; }
+        
+        /* 扫码区域 */
+        .scan-area { background: #f9f9f9; padding: 20px; border-radius: 4px; margin-bottom: 20px; text-align: center; }
+        .scan-input { width: 300px; padding: 10px; font-size: 16px; text-align: center; border: 2px dashed #ddd; background: #fff; }
+        
+        /* 盘点明细表格 */
+        .detail-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .detail-table th, .detail-table td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <h2 class="page-title">盘点管理</h2>
+        
+        <!-- 按钮组 -->
+        <div class="btn-group">
+            <button class="btn" onclick="showAddModal()">新增盘点单</button>
+        </div>
+        
+        <!-- 盘点单列表 -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>盘点单号</th>
+                    <th>盘点日期</th>
+                    <th>盘点类型</th>
+                    <th>操作人</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>PD-20260428-001</td>
+                    <td>2026-04-28</td>
+                    <td>临时盘点</td>
+                    <td>店员A</td>
+                    <td><span class="status-badge status-pending">待审核</span></td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="showDetailModal()">查看</button>
+                        <button class="btn btn-secondary" onclick="showAuditModal()">审核</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>PD-20260427-001</td>
+                    <td>2026-04-27</td>
+                    <td>定期盘点</td>
+                    <td>店员A</td>
+                    <td><span class="status-badge status-approved">已通过</span></td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="showDetailModal()">查看</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- 新增盘点单弹窗 -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">新增盘点单</h3>
+            <form id="addForm">
+                <div class="form-group">
+                    <label class="form-label">盘点类型</label>
+                    <select class="form-select" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option>临时盘点</option>
+                        <option>定期盘点</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label class="form-label">盘点范围</label>
+                    <select class="form-select" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option>全盘</option>
+                        <option>分类盘点</option>
+                        <option>自定义盘点</option>
+                    </select>
+                </div>
+                
+                <div class="scan-area">
+                    <p style="margin-bottom: 10px; color: #666;">请使用扫码枪扫描商品二维码</p>
+                    <input type="text" class="scan-input" placeholder="扫码区域（自动获取焦点）" autofocus>
+                    <p style="margin-top: 10px; font-size: 12px; color: #999;">提示：每扫一个商品，已扫数量 +1</p>
+                </div>
+                
+                <h4>盘点明细</h4>
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>商品SKU</th>
+                            <th>商品名称</th>
+                            <th>系统库存</th>
+                            <th>已扫数量</th>
+                            <th>差异</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>KW-TOY-001</td>
+                            <td>钢铁侠模型玩偶</td>
+                            <td>15</td>
+                            <td>15</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>KW-TOY-002</td>
+                            <td>蜘蛛侠模型玩偶</td>
+                            <td>8</td>
+                            <td>7</td>
+                            <td style="color: #f00;">-1</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddModal()">取消</button>
+                    <button type="submit" class="btn">完成盘点</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 盘点单详情弹窗 -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">盘点单详情</h3>
+            <div style="margin-bottom: 15px;">
+                <p><strong>盘点单号：</strong>PD-20260428-001</p>
+                <p><strong>盘点日期：</strong>2026-04-28</p>
+                <p><strong>盘点类型：</strong>临时盘点</p>
+                <p><strong>操作人：</strong>店员A</p>
+                <p><strong>状态：</strong><span class="status-badge status-pending">待审核</span></p>
+            </div>
+            
+            <h4>盘点明细</h4>
+            <table class="detail-table">
+                <thead>
+                    <tr>
+                        <th>商品SKU</th>
+                        <th>商品名称</th>
+                        <th>系统库存</th>
+                        <th>实际数量</th>
+                        <th>差异数量</th>
+                        <th>差异金额</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>KW-TOY-001</td>
+                        <td>钢铁侠模型玩偶</td>
+                        <td>15</td>
+                        <td>15</td>
+                        <td>0</td>
+                        <td>¥0</td>
+                    </tr>
+                    <tr>
+                        <td>KW-TOY-002</td>
+                        <td>蜘蛛侠模型玩偶</td>
+                        <td>8</td>
+                        <td>7</td>
+                        <td style="color: #f00;">-1</td>
+                        <td style="color: #f00;">-¥100</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="modal-buttons">
+                <button type="button" class="btn" onclick="hideDetailModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 审核弹窗（店主操作） -->
+    <div id="auditModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">审核盘点单</h3>
+            <div style="margin-bottom: 15px;">
+                <p><strong>盘点单号：</strong>PD-20260428-001</p>
+                <p><strong>盘点差异：</strong>盘亏 1个，金额 -¥100</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">审核意见</label>
+                <textarea class="form-input" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+            </div>
+            
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary" onclick="auditAction('reject')">驳回</button>
+                <button type="button" class="btn btn-secondary" onclick="auditAction('partial')">部分通过</button>
+                <button type="button" class="btn" onclick="auditAction('approve')">审核通过</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showAddModal() {
+            document.getElementById('addModal').classList.add('show');
+        }
+        
+        function hideAddModal() {
+            document.getElementById('addModal').classList.remove('show');
+        }
+        
+        function showDetailModal() {
+            document.getElementById('detailModal').classList.add('show');
+        }
+        
+        function hideDetailModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+        
+        function showAuditModal() {
+            document.getElementById('auditModal').classList.add('show');
+        }
+        
+        function hideAuditModal() {
+            document.getElementById('auditModal').classList.remove('show');
+        }
+        
+        function auditAction(action) {
+            if (action === 'approve') {
+                alert('审核通过！库存已调整。');
+            } else if (action === 'reject') {
+                alert('已驳回！请重新盘点。');
+            } else if (action === 'partial') {
+                alert('部分通过！请输入最终认可的库存数。');
+            }
+            hideAuditModal();
+        }
+        
+        // 点击弹窗外部关闭弹窗
+        ['addModal', 'detailModal', 'auditModal'].forEach(id => {
+            document.getElementById(id).addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+        
+        // 表单提交
+        document.getElementById('addForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('盘点完成！已提交审核。');
+            hideAddModal();
+        });
+        
+        // 模拟扫码枪输入
+        document.querySelector('.scan-input')?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                alert('扫码成功！已记录商品。');
+            }
+        });
+    </script>
+</body>
+</html>

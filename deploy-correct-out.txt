@@ -1,0 +1,4 @@
+✅ SSH connected
+✅ SFTP ready
+📁 43 files to upload
+✅ Remote cleaned
