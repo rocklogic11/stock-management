@@ -4,8 +4,8 @@
 
 ### 1.1 基本信息
 - **API版本**：v1.0
-- **协议**：HTTPS
-- **域名**：`https://api.kuwanyubeiqi.com`（生产环境）
+| **协议**：HTTP
+- **域名**：`http://121.40.110.240`（生产环境，阿里云 ECS）
 - **Base URL**：`/api/v1`
 - **数据格式**：JSON
 - **字符编码**：UTF-8
@@ -236,7 +236,7 @@
     "cost_price": 150.00,
     "retail_price": 300.00,
     "stock_threshold": 5,
-    "image_url": "https://cdn.kuwanyubeiqi.com/products/iron-man.jpg"
+    "image_url": "http://121.40.110.240/uploads/products/iron-man.jpg"
   }
   ```
 - **响应示例**：

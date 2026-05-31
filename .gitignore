@@ -1,6 +1,64 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+web/dist/
+
+# Environment files (contain secrets)
 .env
+.env.local
+.env.*.local
+server/.env
+server/.env.production
+web/.env.production
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Uploads (user uploaded files)
+server/uploads/
 uploads/
+
+# Database files (local dev)
+server/data/*.db
+server/data/*.db-journal
+*.db
+*.db-journal
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary deploy scripts
+_deploy_*.js
+_check_*.js
+_fix_*.js
+_upload.js
+deploy-output.*
+deploy-error.*
+deploy-correct-*
+check-output.*
+check-error.*
+fix-out.*
+fix-err.*
+status-out.*
+status-err.txt
+DEPLOY_COMMANDS.txt
+
+# CodeBuddy teams (auto-generated)
+.codebuddy/teams/
+
+# Package lock (optional - uncomment if you want to track this)
+# package-lock.json
