@@ -6,6 +6,7 @@ dist/
 web/dist/
 test-results/
 releases/*.zip
+releases/*.tar.gz
 
 # Environment files (contain secrets)
 .env
