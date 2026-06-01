@@ -35,13 +35,34 @@ const Product = sequelize.define('product', {
     allowNull: false,
     defaultValue: 0,
   },
+  barcode: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    unique: true,
+    comment: '商品包装上的二维码/条码内容',
+  },
   qr_code: {
     type: DataTypes.STRING(255),
     allowNull: true,
   },
-  image_url: {
-    type: DataTypes.STRING(255),
+  images: {
+    type: DataTypes.TEXT,
     allowNull: true,
+    comment: '商品图片JSON数组，最多4张',
+    get() {
+      const val = this.getDataValue('images');
+      return val ? JSON.parse(val) : [];
+    },
+    set(val) {
+      this.setDataValue('images', val ? JSON.stringify(val) : null);
+    },
+  },
+  image_url: {
+    type: DataTypes.VIRTUAL,
+    get() {
+      const imgs = this.images || [];
+      return imgs.length > 0 ? imgs[0] : null;
+    },
   },
   status: {
     type: DataTypes.TINYINT,

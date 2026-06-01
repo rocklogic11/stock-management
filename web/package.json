@@ -9,17 +9,21 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@ericblade/quagga2": "^1.12.1",
+    "@zxing/library": "^0.23.0",
     "axios": "^1.7.2",
     "element-plus": "^2.7.6",
+    "html5-qrcode": "^2.3.8",
+    "jsqr": "^1.4.0",
     "pinia": "^2.1.7",
     "vue": "^3.4.31",
-    "vue-router": "^4.4.0",
-    "@element-plus/icons-vue": "^2.3.1"
+    "vue-router": "^4.4.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
-    "vite": "^5.3.4",
     "unplugin-auto-import": "^0.17.6",
-    "unplugin-vue-components": "^0.27.2"
+    "unplugin-vue-components": "^0.27.2",
+    "vite": "^5.3.4"
   }
 }

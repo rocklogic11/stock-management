@@ -102,7 +102,7 @@
 
 ---
 
-### 2.5 商品管理模块（6个接口）
+### 2.5 商品管理模块（8个接口）
 
 | 接口名称 | 请求方法 | URL | 描述 |
 |---------|---------|-----|------|
@@ -112,6 +112,8 @@
 | 更新商品 | PUT | `/products/{id}` | 更新商品信息 |
 | 删除商品 | DELETE | `/products/{id}` | 下架商品（非物理删除） |
 | 生成二维码 | POST | `/products/{id}/qrcode` | 为商品生成二维码（返回图片URL） |
+| 上传商品图片 | POST | `/upload/product-images` | 上传最多4张商品图片，返回图片URL数组 |
+| 删除商品图片 | POST | `/upload/product-image/delete` | 删除未使用或已移除的商品图片 |
 
 ---
 
@@ -235,10 +237,16 @@
     "category_id": 1,
     "cost_price": 150.00,
     "retail_price": 300.00,
-    "stock_threshold": 5,
-    "image_url": "http://121.40.110.240/uploads/products/iron-man.jpg"
+    "barcode": "6971234567890",
+    "images": [
+      "/uploads/products/iron-man-1.jpg",
+      "/uploads/products/iron-man-2.jpg"
+    ]
   }
   ```
+- **字段说明**：
+  - `barcode`：商品包装上的条形码或二维码内容，非空时必须全局唯一。
+  - `images`：商品图片URL数组，最多4张；服务端仅接受系统上传路径或配置的OSS路径。
 - **响应示例**：
   ```json
   {
@@ -252,7 +260,11 @@
       "cost_price": 150.00,
       "retail_price": 300.00,
       "stock_quantity": 0,
-      "stock_threshold": 5,
+      "barcode": "6971234567890",
+      "images": [
+        "/uploads/products/iron-man-1.jpg",
+        "/uploads/products/iron-man-2.jpg"
+      ],
       "status": 1,
       "created_at": "2026-04-28 20:00:00"
     }
@@ -261,7 +273,39 @@
 
 ---
 
-### 3.3 创建入库单
+### 3.3 上传商品图片
+- **接口**：`POST /upload/product-images`
+- **描述**：上传商品图片，单次最多4张，服务端压缩后返回URL。
+- **请求格式**：`multipart/form-data`
+- **表单字段**：
+  - `images`：图片文件，可重复传入，支持 JPG/PNG/WebP，单张不超过5MB。
+- **响应示例**：
+  ```json
+  {
+    "code": 200,
+    "message": "上传成功",
+    "data": {
+      "images": [
+        "/uploads/products/20260531-a.jpg",
+        "/uploads/products/20260531-b.jpg"
+      ]
+    }
+  }
+  ```
+
+### 3.4 删除商品图片
+- **接口**：`POST /upload/product-image/delete`
+- **描述**：删除取消保存或已从商品中移除的图片。
+- **请求参数**：
+  ```json
+  {
+    "url": "/uploads/products/20260531-a.jpg"
+  }
+  ```
+
+---
+
+### 3.5 创建入库单
 - **接口**：`POST /inbound-orders`
 - **描述**：新增入库单，包含多个商品明细
 - **请求参数**：

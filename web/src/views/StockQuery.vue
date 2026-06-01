@@ -72,7 +72,7 @@ const fetchData = async () => {
 
 const fetchCategories = async () => {
   const res = await request.get('/categories')
-  categories.value = res.data
+  categories.value = Array.isArray(res.data) ? res.data : []
 }
 
 onMounted(() => { fetchData(); fetchCategories() })

@@ -117,8 +117,11 @@ router.post('/:id/scan', auth, checkPermission('inventory_manage'), async (req, 
     } catch (e) {
       // 不是JSON，直接作为SKU使用
     }
-    // 根据sku找到商品
-    const product = await Product.findOne({ where: { sku_code } });
+    // 优先按系统 SKU 查找，其次按商品包装条码/二维码编号查找
+    let product = await Product.findOne({ where: { sku_code, status: 1 } });
+    if (!product) {
+      product = await Product.findOne({ where: { barcode: sku_code, status: 1 } });
+    }
     if (!product) return res.status(404).json(fail(1001, '商品不存在'));
     // 找到盘点单明细
     let orderItem = await InventoryOrderItem.findOne({

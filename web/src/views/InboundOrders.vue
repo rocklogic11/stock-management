@@ -52,11 +52,11 @@
           </template>
           <div class="scan-area">
             <div class="scan-box">
-              <div class="scan-title">扫描或输入 SKU</div>
+              <div class="scan-title">扫描或输入 SKU / 商品编号</div>
               <el-input
                 ref="scanInputRef"
                 v-model="scanInput"
-                placeholder="扫描条码或输入SKU编码，回车添加"
+                placeholder="扫描条码/商品编号或输入SKU编码，回车添加"
                 size="large"
                 clearable
                 @keydown.enter="handleScan"
@@ -210,11 +210,15 @@ const exitWorkbench = () => {
 const handleScan = () => {
   const sku = scanInput.value.trim()
   if (!sku) return
-  const product = productList.value.find(p => p.sku_code.toUpperCase() === sku.toUpperCase())
+  // 优先按 sku_code 匹配，其次按 barcode 匹配
+  let product = productList.value.find(p => p.sku_code.toUpperCase() === sku.toUpperCase())
+  if (!product) {
+    product = productList.value.find(p => p.barcode && p.barcode.toUpperCase() === sku.toUpperCase())
+  }
   if (!product) {
     feedback.type = 'error'
     feedback.title = '未识别商品'
-    feedback.desc = `SKU "${sku}" 未找到，请检查或先建档`
+    feedback.desc = `编码 "${sku}" 未找到，请检查或先建档`
     ElMessage.warning(`未识别商品：${sku}`)
     scanInput.value = ''
     scanInputRef.value?.focus()

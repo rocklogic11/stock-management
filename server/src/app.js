@@ -18,6 +18,7 @@ const analyticsRoutes = require('./routes/analytics');
 const notificationRoutes = require('./routes/notifications');
 const operationLogRoutes = require('./routes/operation-logs');
 const dashboardRoutes = require('./routes/dashboard');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/operation-logs', operationLogRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/upload', uploadRoutes);
 
 // SPA 路由回退（必须放在 API 路由之后）
 app.get('*', (req, res, next) => {

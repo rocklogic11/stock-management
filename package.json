@@ -4,7 +4,8 @@
   "description": "> 一套面向潮玩/玩具零售店的库存管理系统，支持扫码入库、盘点、库存预警等功能。",
   "main": "_deploy_final.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "release:check": "powershell -ExecutionPolicy Bypass -File scripts/release-check.ps1",
+    "ui:smoke": "playwright test scripts/ui-smoke-check.spec.js --reporter=line"
   },
   "keywords": [],
   "author": "",
@@ -12,5 +13,8 @@
   "type": "commonjs",
   "dependencies": {
     "ssh2": "^1.17.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
   }
 }

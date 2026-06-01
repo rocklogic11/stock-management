@@ -225,7 +225,11 @@ router.post('/:id/scan', auth, checkPermission('inbound_manage'), async (req, re
       const parsed = JSON.parse(sku_code);
       sku_code = parsed.sku_code || sku_code;
     } catch (e) {}
-    const product = await Product.findOne({ where: { sku_code, status: 1 } });
+    // 优先按 sku_code 查找，其次按 barcode 查找
+    let product = await Product.findOne({ where: { sku_code, status: 1 } });
+    if (!product) {
+      product = await Product.findOne({ where: { barcode: sku_code, status: 1 } });
+    }
     if (!product) return res.status(404).json(fail(1001, '商品不存在'));
     const order = await InboundOrder.findByPk(req.params.id);
     if (!order) return res.status(404).json(fail(404, '入库单不存在'));
@@ -275,9 +279,16 @@ router.post('/:id/undo-scan', auth, checkPermission('inbound_manage'), async (re
     const order = await InboundOrder.findByPk(req.params.id);
     if (!order) return res.status(404).json(fail(404, '入库单不存在'));
     if (order.status === 1) return res.status(400).json(fail(1005, '已完成的入库单不能撤销'));
-    const { sku_code } = req.body;
+    let { sku_code } = req.body;
     if (!sku_code) return res.status(400).json(fail(400, 'sku_code不能为空'));
-    const product = await Product.findOne({ where: { sku_code } });
+    try {
+      const parsed = JSON.parse(sku_code);
+      sku_code = parsed.sku_code || sku_code;
+    } catch (e) {}
+    let product = await Product.findOne({ where: { sku_code } });
+    if (!product) {
+      product = await Product.findOne({ where: { barcode: sku_code } });
+    }
     if (!product) return res.status(404).json(fail(1001, '商品不存在'));
     let orderItem = await InboundOrderItem.findOne({
       where: { order_id: order.id, product_id: product.id },

@@ -54,13 +54,15 @@ CREATE TABLE `product` (
   `cost_price` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '加权平均成本',
   `retail_price` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '零售价',
   `stock_quantity` int(11) NOT NULL DEFAULT '0' COMMENT '当前库存数量',
+  `barcode` varchar(100) DEFAULT NULL COMMENT '商品包装条形码/二维码内容',
   `qr_code` varchar(255) DEFAULT NULL COMMENT '二维码图片路径',
-  `image_url` varchar(255) DEFAULT NULL COMMENT '商品图片路径',
+  `images` text DEFAULT NULL COMMENT '商品图片JSON数组，最多4张',
   `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '状态（1=正常，0=下架）',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sku_code` (`sku_code`),
+  UNIQUE KEY `uniq_product_barcode` (`barcode`),
   KEY `idx_category_id` (`category_id`),
   KEY `idx_product_name` (`product_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品表';
@@ -149,7 +151,27 @@ CREATE TABLE `stock_alert_setting` (
   KEY `idx_product_id` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='库存预警设置表';
 
--- 10. 操作日志表（operation_log）
+-- 10. 库存流水表（stock_movement）
+CREATE TABLE `stock_movement` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '流水ID',
+  `product_id` bigint(20) NOT NULL COMMENT '商品ID',
+  `movement_type` varchar(30) NOT NULL COMMENT 'inbound/outbound/inventory_adjust/manual_adjust',
+  `quantity` int(11) NOT NULL COMMENT '变动数量，正数入库，负数出库',
+  `before_quantity` int(11) NOT NULL COMMENT '变动前库存',
+  `after_quantity` int(11) NOT NULL COMMENT '变动后库存',
+  `unit_cost` decimal(10,2) DEFAULT NULL COMMENT '变动时成本价',
+  `reference_type` varchar(30) DEFAULT NULL COMMENT '关联单据类型',
+  `reference_id` bigint(20) DEFAULT NULL COMMENT '关联单据ID',
+  `operator_id` bigint(20) DEFAULT NULL COMMENT '操作人ID',
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_stock_movement_product_id` (`product_id`),
+  KEY `idx_stock_movement_reference` (`reference_type`, `reference_id`),
+  KEY `idx_stock_movement_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='库存流水表';
+
+-- 11. 操作日志表（operation_log）
 CREATE TABLE `operation_log` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '日志ID',
   `user_id` bigint(20) NOT NULL COMMENT '操作人ID',
@@ -163,7 +185,7 @@ CREATE TABLE `operation_log` (
   KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志表';
 
--- 11. 通知表（notification）
+-- 12. 通知表（notification）
 CREATE TABLE `notification` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '通知ID',
   `user_id` bigint(20) NOT NULL COMMENT '接收用户ID',
