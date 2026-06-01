@@ -3,6 +3,7 @@
 Date: 2026-06-01
 UAT URL: https://points-biology-salem-filing.trycloudflare.com
 Production URL: http://121.40.110.240
+Temporary production HTTPS UAT URL: https://apps-burn-solve-edward.trycloudflare.com
 Local URL: http://127.0.0.1:3000
 
 ## Summary
@@ -136,6 +137,8 @@ Fix: production startup now skips automatic schema alter. Database changes must 
 | Product image upload through API | Passed |
 | Uploaded image public `/uploads` access | Passed |
 | Uploaded image deletion | Passed |
+| Temporary production HTTPS tunnel health | Passed |
+| Temporary production HTTPS tunnel PC/mobile UI smoke | Passed |
 
 Production observation:
 
@@ -149,8 +152,8 @@ Production observation:
 
 ## Remaining Blockers
 
-- Production is still HTTP over IP. iOS real-time camera scanning requires HTTPS, so mobile扫码 must be tested through a HTTPS URL. Current production URL is suitable for PC and mobile layout testing, but not iOS camera permission testing.
-- The local commit `1790d48` has not been pushed to GitHub because `github.com:443` was unreachable from this workstation after deployment. The hotfix is already applied on the production server.
+- Permanent production access is still HTTP over IP. iOS real-time camera scanning requires HTTPS. A temporary Cloudflare Tunnel URL is available for this UAT run, but a real release should add a filed domain and HTTPS certificate.
+- Local commits through `2bdd462` have not been pushed to GitHub because `github.com:443` was unreachable from this workstation after deployment. The hotfix is already applied on the production server.
 - `npm audit` still reports vulnerabilities: backend 12, frontend 3.
 - Frontend build warns about large chunks.
 - Some scanner dependencies declare newer Node engine requirements than the server Node 18 runtime, but frontend build completed successfully because those packages are bundled at build time.
