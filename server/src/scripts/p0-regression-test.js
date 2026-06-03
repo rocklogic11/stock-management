@@ -106,6 +106,9 @@ async function run() {
   const clerkProduct = expectOk(await request('GET', `/api/v1/products/${state.productId}`, undefined, state.clerkToken), 'clerk product detail');
   assertNoSensitiveFields(clerkProduct, 'clerkProduct');
 
+  const clerkProducts = expectOk(await request('GET', `/api/v1/products?page=1&page_size=5`, undefined, state.clerkToken), 'clerk product list');
+  assertNoSensitiveFields(clerkProducts.items, 'clerkProducts.items');
+
   const draftOrder = expectOk(await request('POST', '/api/v1/inbound-orders', {
     status: 1,
     remark: 'p0 regression should still create draft',

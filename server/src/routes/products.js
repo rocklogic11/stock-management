@@ -19,8 +19,9 @@ function filterSensitiveFields(data, user) {
     return {
       ...plain,
       items: plain.items.map(item => {
-        removeKeys(item, ['cost_price']);
-        return item;
+        const plainItem = toPlain(item);
+        removeKeys(plainItem, ['cost_price']);
+        return plainItem;
       }),
     };
   }
