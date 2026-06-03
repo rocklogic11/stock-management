@@ -18,7 +18,7 @@ P0 已完成并推送到 GitHub `main`，当前进入 P1：生产环境治理、
 
 当前最新提交：
 
-- `ecd8100 fix: address p0 inventory and security issues`
+- `68b0ba4 fix: disable unsafe production memory cache`
 
 ## 总体实施路线
 
@@ -27,7 +27,7 @@ P0 已完成并推送到 GitHub `main`，当前进入 P1：生产环境治理、
 | P0 | 最高 | 修复账实一致性、安全配置、敏感字段泄露 | Done | `docs/P0_REMEDIATION_LOG_2026-06-03.md` |
 | P1-1 | 高 | 生产凭据、环境变量、部署前安全治理 | Doing | 本清单；生产 env 校验脚本 |
 | P1-2 | 高 | SIT/UAT/回归/冒烟测试门禁标准化 | Doing | `npm run release:check`；待新增发布门禁文档 |
-| P1-3 | 高 | 上线发布、备份、回滚、生产观察 | Pending | 待执行 |
+| P1-3 | 高 | 上线发布、备份、回滚、生产观察 | Done | `docs/PRODUCTION_RELEASE_RECORD_2026-06-03.md` |
 | P1-4 | 中高 | 移动端扫码、拍照、表单、弹窗体验强化 | Pending | 待执行 |
 | P1-5 | 中高 | PC 端商品档案、首页驾驶舱、导航结构优化 | Pending | 待执行 |
 | P2 | 中 | CI/CD、监控、日志、审计、性能、安全扫描 | Pending | 待执行 |
@@ -55,7 +55,7 @@ P0 已完成并推送到 GitHub `main`，当前进入 P1：生产环境治理、
 | P1-05 | 发布前 SIT/UAT/回归测试门禁文档 | Done | 覆盖 PC、iOS、扫码、图片、商品、入库、盘点、权限 | `docs/RELEASE_TEST_GATE.md` |
 | P1-06 | 本地发布门禁再次执行并记录 | Done | `npm run release:check` 已通过 | 本轮本地自测 |
 | P1-07 | 线上部署前备份与回滚清单 | Done | 数据库、前端、后端、PM2、Nginx | `docs/PRODUCTION_RELEASE_RUNBOOK.md` |
-| P1-08 | 线上发布与观察 | Pending | 部署后健康检查、登录、分类、商品、扫码相关接口 | 待执行 |
+| P1-08 | 线上发布与观察 | Done | 已完成生产备份、部署、冒烟、P0 回归、上线后观察 | `docs/PRODUCTION_RELEASE_RECORD_2026-06-03.md` |
 
 ## P1 产品体验待办
 
@@ -80,7 +80,7 @@ P0 已完成并推送到 GitHub `main`，当前进入 P1：生产环境治理、
 
 ## 下一步任务
 
-下一步执行：`P1-08 线上发布与观察`。执行前先做生产备份，再部署当前 GitHub `main`。
+下一步执行：`P1-4 移动端扫码、拍照、表单、弹窗体验强化`，同时安排用户进行 iOS 真机 UAT。
 
 执行原则：
 

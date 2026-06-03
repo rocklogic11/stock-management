@@ -83,6 +83,8 @@ npm run env:check:production -- /opt/stock-management/server/.env.production
 rsync -a --delete \
   --exclude node_modules \
   --exclude uploads \
+  --exclude logs \
+  --exclude .env \
   --exclude .env.production \
   "$RELEASE_DIR/server/" /opt/stock-management/server/
 

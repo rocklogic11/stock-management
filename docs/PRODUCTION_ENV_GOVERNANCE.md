@@ -23,6 +23,9 @@
 | 新增环境变量模板 | Done | `server/.env.example`、`web/.env.example` |
 | 新增生产 env 校验脚本 | Done | `server/src/scripts/validate-production-env.js` |
 | 生产启动强校验关键变量 | Done | `server/src/config/index.js` |
+| 生产 JWT 密钥轮换 | Done | 2026-06-03 发布时完成 |
+| 生产 MySQL `kuwan_user` 密码轮换 | Done | 2026-06-03 发布时完成 |
+| `.env` 与 `.env.production` 运行配置一致化 | Done | 统一为实际生产库 `kuwanyubeiqi` |
 
 ## 生产环境检查命令
 
@@ -104,7 +107,6 @@ npm run env:check:production -- .env.production
 
 ## 待确认
 
-1. 是否现在轮换 JWT secret。
-2. 是否现在轮换 MySQL 密码。
-3. 是否修改默认登录账号密码。
-4. 是否申请正式域名和 HTTPS 证书。
+1. 是否修改默认登录账号密码。
+2. 是否申请正式域名和 HTTPS 证书。
+3. 是否接入 Redis 作为生产共享缓存。
