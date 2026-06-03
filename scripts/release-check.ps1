@@ -49,7 +49,8 @@ try {
       "src/config/index.js",
       "src/utils/permissions.js",
       "src/scripts/release-smoke-test.js",
-      "src/scripts/p0-regression-test.js"
+      "src/scripts/p0-regression-test.js",
+      "src/scripts/validate-production-env.js"
     )
     Push-Location $serverDir
     foreach ($file in $files) {

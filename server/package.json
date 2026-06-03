@@ -9,7 +9,8 @@
     "init-db": "node src/scripts/init-db.js",
     "migrate:barcode-images": "node src/scripts/migrate-add-barcode-images.js",
     "smoke:release": "node src/scripts/release-smoke-test.js",
-    "test:p0": "node src/scripts/p0-regression-test.js"
+    "test:p0": "node src/scripts/p0-regression-test.js",
+    "env:check:production": "node src/scripts/validate-production-env.js"
   },
   "dependencies": {
     "ali-oss": "^6.23.0",
