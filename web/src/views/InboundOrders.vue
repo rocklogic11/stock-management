@@ -283,7 +283,8 @@ const confirmInbound = async () => {
       quantity: i.quantity,
       unit_price: i.unit_price,
     }))
-    await request.post('/inbound-orders', { items, remark: workbenchRemark.value, status: 1 })
+    const createRes = await request.post('/inbound-orders', { items, remark: workbenchRemark.value })
+    await request.put(`/inbound-orders/${createRes.data.id}/confirm`)
     ElMessage.success('入库成功')
     exitWorkbench()
   } catch (e) {}

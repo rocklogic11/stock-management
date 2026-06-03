@@ -4,8 +4,24 @@ const { Op } = require('sequelize');
 const { auth, checkPermission } = require('../middleware/auth');
 const { getPagination, getPagingData, generateInboundOrderNo, success, fail } = require('../utils/helpers');
 const CacheUtil = require('../utils/cache');
+const { canViewCost, removeKeys, toPlain } = require('../utils/permissions');
 
 const router = express.Router();
+
+function filterInboundOrder(order, user) {
+  const plain = toPlain(order);
+  if (canViewCost(user)) return plain;
+
+  removeKeys(plain, ['total_amount']);
+  if (Array.isArray(plain.items)) {
+    plain.items = plain.items.map(item => {
+      removeKeys(item, ['unit_price', 'total_price']);
+      if (item.product) removeKeys(item.product, ['cost_price']);
+      return item;
+    });
+  }
+  return plain;
+}
 
 // GET /api/v1/inbound-orders
 router.get('/', auth, async (req, res) => {
@@ -29,7 +45,8 @@ router.get('/', auth, async (req, res) => {
       ],
       order: [['id', 'DESC']],
     });
-    res.json(success(getPagingData(count, rows, page, limit)));
+    const data = getPagingData(count, rows.map(row => filterInboundOrder(row, req.user)), page, limit);
+    res.json(success(data));
   } catch (error) {
     console.error(error);
     res.status(500).json(fail(500, '服务器错误'));
@@ -48,7 +65,7 @@ router.get('/:id', auth, async (req, res) => {
     if (!order) {
       return res.status(404).json(fail(404, '入库单不存在'));
     }
-    res.json(success(order));
+    res.json(success(filterInboundOrder(order, req.user)));
   } catch (error) {
     res.status(500).json(fail(500, '服务器错误'));
   }
@@ -58,8 +75,9 @@ router.get('/:id', auth, async (req, res) => {
 router.post('/', auth, checkPermission('inbound_manage'), async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { items, remark, status: orderStatus } = req.body;
+    const { items, remark } = req.body;
     if (!items || items.length === 0) {
+      await t.rollback();
       return res.status(400).json(fail(400, '入库商品列表不能为空'));
     }
     const order_no = generateInboundOrderNo();
@@ -84,31 +102,16 @@ router.post('/', auth, checkPermission('inbound_manage'), async (req, res) => {
       orderItems.push({ product_id, quantity, unit_price: price, total_price: itemTotal });
     }
     const order = await InboundOrder.create({
-      order_no, user_id: req.userId, total_quantity, total_amount, status: orderStatus || 2, remark,
+      order_no, user_id: req.userId, total_quantity, total_amount, status: 2, remark,
     }, { transaction: t });
     for (const item of orderItems) {
       await InboundOrderItem.create({ order_id: order.id, ...item }, { transaction: t });
-    }
-    // 如果状态为已完成，更新库存和加权平均成本
-    if (order.status === 1) {
-      for (const item of orderItems) {
-        const product = await Product.findByPk(item.product_id, { transaction: t });
-        const newQuantity = product.stock_quantity + item.quantity;
-        const newCostPrice = ((product.stock_quantity * product.cost_price) + (item.quantity * item.unit_price)) / newQuantity;
-        await product.update({ stock_quantity: newQuantity, cost_price: Math.round(newCostPrice * 100) / 100 }, { transaction: t });
-      }
     }
     await OperationLog.create({
       user_id: req.userId, operation_type: '入库管理',
       operation_detail: `创建入库单: ${order_no}, ${total_quantity}件商品`,
     }, { transaction: t });
     await t.commit();
-    // 如果直接确认入库，清理库存相关缓存
-    if (orderStatus === 1) {
-      await CacheUtil.clearProductCache();
-      await CacheUtil.clearStockCache();
-      await CacheUtil.clearDashboardCache();
-    }
     res.json(success({ id: order.id, order_no }, '入库单创建成功'));
   } catch (error) {
     await t.rollback();

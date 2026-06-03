@@ -42,9 +42,14 @@ try {
       "src/app.js",
       "src/routes/categories.js",
       "src/routes/products.js",
+      "src/routes/inbound-orders.js",
+      "src/routes/inventory-orders.js",
       "src/routes/upload.js",
       "src/middleware/auth.js",
-      "src/scripts/release-smoke-test.js"
+      "src/config/index.js",
+      "src/utils/permissions.js",
+      "src/scripts/release-smoke-test.js",
+      "src/scripts/p0-regression-test.js"
     )
     Push-Location $serverDir
     foreach ($file in $files) {
@@ -85,6 +90,13 @@ try {
     Push-Location $serverDir
     $env:SMOKE_BASE_URL = $BaseUrl
     npm run smoke:release
+    Pop-Location
+  }
+
+  Invoke-Step "Run P0 regression test" {
+    Push-Location $serverDir
+    $env:SMOKE_BASE_URL = $BaseUrl
+    npm run test:p0
     Pop-Location
   }
 

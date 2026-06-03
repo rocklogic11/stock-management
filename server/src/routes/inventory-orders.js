@@ -3,8 +3,23 @@ const { sequelize, Product, InventoryOrder, InventoryOrderItem, OperationLog, No
 const { auth, checkPermission } = require('../middleware/auth');
 const { getPagination, getPagingData, generateInventoryOrderNo, success, fail } = require('../utils/helpers');
 const CacheUtil = require('../utils/cache');
+const { canViewCost, removeKeys, toPlain } = require('../utils/permissions');
 
 const router = express.Router();
+
+function filterInventoryOrder(order, user) {
+  const plain = toPlain(order);
+  if (canViewCost(user)) return plain;
+
+  if (Array.isArray(plain.items)) {
+    plain.items = plain.items.map(item => {
+      removeKeys(item, ['difference_amount']);
+      if (item.product) removeKeys(item.product, ['cost_price']);
+      return item;
+    });
+  }
+  return plain;
+}
 
 // GET /api/v1/inventory-orders
 router.get('/', auth, async (req, res) => {
@@ -43,7 +58,7 @@ router.get('/:id', auth, async (req, res) => {
     if (!order) {
       return res.status(404).json(fail(404, '盘点单不存在'));
     }
-    res.json(success(order));
+    res.json(success(filterInventoryOrder(order, req.user)));
   } catch (error) {
     res.status(500).json(fail(500, '服务器错误'));
   }
@@ -240,8 +255,9 @@ router.put('/:id/submit', auth, checkPermission('inventory_manage'), async (req,
 router.put('/:id/audit', auth, checkPermission('inventory_audit'), async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { audit_status, audit_opinion } = req.body;
-    if (!audit_status) {
+    const auditStatus = Number(req.body.audit_status);
+    const { audit_opinion } = req.body;
+    if (!auditStatus) {
       await t.rollback();
       return res.status(400).json(fail(400, '审核状态不能为空'));
     }
@@ -257,23 +273,53 @@ router.put('/:id/audit', auth, checkPermission('inventory_audit'), async (req, r
       await t.rollback();
       return res.status(400).json(fail(1005, '盘点单状态不允许审核'));
     }
-    await order.update({
-      status: 3, audit_status, audit_opinion, audit_user_id: req.userId, audited_at: new Date(),
-    }, { transaction: t });
-    // 如果审核通过，调整库存
-    if (audit_status === 1) {
+
+    const lockedProducts = new Map();
+    if (auditStatus === 1) {
       for (const item of order.items) {
-        if (item.difference !== 0 && item.product) {
-          const beforeQty = item.product.stock_quantity;
-          await item.product.update({ stock_quantity: item.actual_quantity }, { transaction: t });
+        const product = await Product.findByPk(item.product_id, {
+          transaction: t,
+          lock: t.LOCK.UPDATE,
+        });
+        if (product) lockedProducts.set(Number(product.id), product);
+      }
+
+      const conflicts = order.items
+        .filter(item => {
+          const product = lockedProducts.get(Number(item.product_id));
+          return !product || Number(product.stock_quantity) !== Number(item.system_quantity);
+        })
+        .map(item => {
+          const product = lockedProducts.get(Number(item.product_id)) || item.product;
+          return {
+            product_id: item.product_id,
+            product_name: product ? product.product_name : '',
+            sku_code: product ? product.sku_code : '',
+            snapshot_quantity: item.system_quantity,
+            current_quantity: product ? product.stock_quantity : null,
+            actual_quantity: item.actual_quantity,
+          };
+        });
+
+      if (conflicts.length > 0) {
+        await t.rollback();
+        return res.status(409).json(fail(1006, '盘点期间库存已发生变化，请重新盘点或核对后再审核', { conflicts }));
+      }
+
+      for (const item of order.items) {
+        const product = lockedProducts.get(Number(item.product_id));
+        if (item.difference !== 0 && product) {
+          const beforeQty = item.system_quantity;
+          const afterQty = item.actual_quantity;
+          await product.update({ stock_quantity: afterQty }, { transaction: t });
           // 记录库存流水
           await StockMovement.create({
-            product_id: item.product.id,
+            product_id: product.id,
             movement_type: 'inventory_adjust',
             quantity: item.difference,
             before_quantity: beforeQty,
-            after_quantity: item.actual_quantity,
-            unit_cost: item.product.cost_price,
+            after_quantity: afterQty,
+            unit_cost: product.cost_price,
             reference_type: 'inventory_order',
             reference_id: order.id,
             operator_id: req.userId,
@@ -281,23 +327,28 @@ router.put('/:id/audit', auth, checkPermission('inventory_audit'), async (req, r
         }
       }
     }
+
+    await order.update({
+      status: 3, audit_status: auditStatus, audit_opinion, audit_user_id: req.userId, audited_at: new Date(),
+    }, { transaction: t });
+
     // 通知店员审核结果
     await Notification.create({
       user_id: order.user_id, type: 3,
       title: '盘点审核结果',
-      content: `盘点单${order.order_no}${audit_status === 1 ? '已通过' : '已驳回'}${audit_opinion ? '，' + audit_opinion : ''}`,
+      content: `盘点单${order.order_no}${auditStatus === 1 ? '已通过' : '已驳回'}${audit_opinion ? '，' + audit_opinion : ''}`,
       related_id: order.id, related_type: '盘点单',
     }, { transaction: t });
     await OperationLog.create({
       user_id: req.userId, operation_type: '盘点审核',
-      operation_detail: `审核盘点单: ${order.order_no}, ${audit_status === 1 ? '通过' : '驳回'}`,
+      operation_detail: `审核盘点单: ${order.order_no}, ${auditStatus === 1 ? '通过' : '驳回'}`,
     }, { transaction: t });
     await t.commit();
     // 盘点审核通过后库存已变更，清理缓存
     await CacheUtil.clearProductCache();
     await CacheUtil.clearStockCache();
     await CacheUtil.clearDashboardCache();
-    res.json(success(null, audit_status === 1 ? '审核通过' : '已驳回'));
+    res.json(success(null, auditStatus === 1 ? '审核通过' : '已驳回'));
   } catch (error) {
     await t.rollback();
     console.error(error);

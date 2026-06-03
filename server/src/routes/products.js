@@ -7,24 +7,25 @@ const { Product, Category, StockAlertSetting, OperationLog } = require('../model
 const { auth, checkPermission } = require('../middleware/auth');
 const { getPagination, getPagingData, generateSkuCode, success, fail } = require('../utils/helpers');
 const CacheUtil = require('../utils/cache');
+const { canViewCost, removeKeys, toPlain } = require('../utils/permissions');
 
 const router = express.Router();
 
 // 按角色过滤敏感字段（成本价等）
 function filterSensitiveFields(data, user) {
-  const permissions = user?.role?.permissions
-    ? (typeof user.role.permissions === 'string' ? JSON.parse(user.role.permissions) : user.role.permissions)
-    : {};
-  const isOwner = user && user.role && (user.role.role_name === '店主' || permissions.permission_manage);
-  if (isOwner) return data;
-  // 非店主：移除成本价和金额相关字段
-  if (data && data.items && Array.isArray(data.items)) {
-    return { ...data, items: data.items.map(item => {
-      const { cost_price, ...rest } = item.toJSON ? item.toJSON() : item;
-      return rest;
-    })};
+  const plain = toPlain(data);
+  if (canViewCost(user)) return plain;
+  if (plain && plain.items && Array.isArray(plain.items)) {
+    return {
+      ...plain,
+      items: plain.items.map(item => {
+        removeKeys(item, ['cost_price']);
+        return item;
+      }),
+    };
   }
-  return data;
+  if (plain && typeof plain === 'object') removeKeys(plain, ['cost_price']);
+  return plain;
 }
 
 function normalizeBarcode(barcode) {
