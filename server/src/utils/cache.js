@@ -2,9 +2,20 @@ const NodeCache = require('node-cache');
 const Redis = require('ioredis');
 
 // 缓存模式: 'redis' 或 'memory'
-let cacheMode = 'memory';
+let cacheMode = 'none';
 let redisClient = null;
 let memoryCache = null;
+
+function shouldUseMemoryCache() {
+  if (process.env.CACHE_MEMORY_ENABLED === 'true') return true;
+  return process.env.NODE_ENV !== 'production';
+}
+
+function disableCache() {
+  cacheMode = 'none';
+  memoryCache = null;
+  console.log('[Cache] Memory cache disabled');
+}
 
 // 初始化Redis连接
 const initRedis = () => {
@@ -56,8 +67,10 @@ const initMemory = () => {
 const init = () => {
   if (process.env.REDIS_ENABLED === 'true') {
     initRedis();
-  } else {
+  } else if (shouldUseMemoryCache()) {
     initMemory();
+  } else {
+    disableCache();
   }
 };
 
@@ -102,6 +115,10 @@ const set = async (key, value, ttl = null) => {
       } else {
         memoryCache.set(key, value);
       }
+    }
+
+    if (cacheMode === 'none') {
+      return false;
     }
     
     console.log(`[Cache] SET: ${key}`);
