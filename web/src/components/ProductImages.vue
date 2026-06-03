@@ -7,17 +7,34 @@
           <el-icon class="remove-btn" @click="removeImage(index)"><Close /></el-icon>
         </div>
       </div>
-      <div v-if="imageUrls.length < 4" class="image-add" @click="triggerUpload">
-        <el-icon :size="28"><Plus /></el-icon>
-        <span>添加图片</span>
+      <div v-if="imageUrls.length < 4" class="image-add" :class="{ disabled: uploading }" @click="triggerCamera">
+        <el-icon :size="28"><Camera /></el-icon>
+        <span>拍照</span>
         <span class="sub-text">({{ imageUrls.length }}/4)</span>
       </div>
     </div>
+    <div v-if="imageUrls.length < 4" class="upload-actions">
+      <el-button :disabled="uploading" type="primary" plain @click="triggerCamera">
+        <el-icon><Camera /></el-icon>
+        拍照添加
+      </el-button>
+      <el-button :disabled="uploading" plain @click="triggerGallery">
+        <el-icon><Picture /></el-icon>
+        相册选择
+      </el-button>
+    </div>
     <input
-      ref="fileInputRef"
+      ref="cameraInputRef"
       type="file"
       accept="image/*"
       capture="environment"
+      style="display: none"
+      @change="onFileSelected"
+    />
+    <input
+      ref="galleryInputRef"
+      type="file"
+      accept="image/*"
       multiple
       style="display: none"
       @change="onFileSelected"
@@ -39,7 +56,8 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'uploaded', 'removed'])
 
-const fileInputRef = ref(null)
+const cameraInputRef = ref(null)
+const galleryInputRef = ref(null)
 const uploading = ref(false)
 
 const imageUrls = computed(() => props.modelValue || [])
@@ -48,8 +66,14 @@ watch(() => props.modelValue, (val) => {
   // sync
 }, { deep: true })
 
-const triggerUpload = () => {
-  fileInputRef.value?.click()
+const triggerCamera = () => {
+  if (uploading.value) return
+  cameraInputRef.value?.click()
+}
+
+const triggerGallery = () => {
+  if (uploading.value) return
+  galleryInputRef.value?.click()
 }
 
 const onFileSelected = async (e) => {
@@ -165,6 +189,19 @@ const removeImage = (index) => {
   border-color: #409eff;
   color: #409eff;
 }
+.image-add.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.upload-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.upload-actions .el-button {
+  min-width: 112px;
+}
 .sub-text {
   font-size: 11px;
   color: #c0c4cc;
@@ -188,6 +225,15 @@ const removeImage = (index) => {
     width: 100%;
     height: auto;
     aspect-ratio: 1;
+  }
+  .upload-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .upload-actions .el-button {
+    width: 100%;
+    min-height: 40px;
+    margin-left: 0;
   }
 }
 </style>

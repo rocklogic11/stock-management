@@ -14,6 +14,7 @@
         实时扫码
       </el-button>
       <el-button @click="triggerPhotoScan" class="scan-btn" :loading="scanning">
+        <el-icon v-if="!scanning"><Picture /></el-icon>
         拍照识别
       </el-button>
     </div>
@@ -34,11 +35,16 @@
       <el-icon><WarningFilled /></el-icon>
       {{ error }}
     </div>
+    <div v-if="error" class="scan-error-actions">
+      <el-button size="small" type="primary" plain @click="startLiveScan">重新扫码</el-button>
+      <el-button size="small" plain @click="triggerPhotoScan">拍照识别</el-button>
+    </div>
 
     <el-dialog
       v-model="scannerDialogVisible"
       title="扫描商品编号"
       :width="dialogWidth"
+      :fullscreen="isMobileViewport"
       class="scanner-dialog"
       :close-on-click-modal="false"
       @closed="stopLiveScan"
@@ -58,14 +64,16 @@
         <p class="scanner-tip">请将商品条形码完整放入横向取景框。若画面为黑色，请允许相机权限并退出无痕浏览后重试。</p>
       </div>
       <template #footer>
-        <el-button @click="scannerDialogVisible = false">关闭</el-button>
+        <div class="scanner-footer">
+          <el-button @click="scannerDialogVisible = false">关闭</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' }
@@ -80,10 +88,15 @@ const liveScanning = ref(false)
 const scannerDialogVisible = ref(false)
 const error = ref('')
 const fileScannerId = `barcode-file-${Math.random().toString(36).slice(2)}`
+const isMobileViewport = ref(window.innerWidth <= 768)
 let mediaStream = null
 let zxingLiveReader = null
 let zxingModulePromise = null
-const dialogWidth = computed(() => window.innerWidth <= 768 ? '96%' : '420px')
+const dialogWidth = computed(() => isMobileViewport.value ? '100%' : '420px')
+
+const handleResize = () => {
+  isMobileViewport.value = window.innerWidth <= 768
+}
 
 const getSupportedFormats = (Html5QrcodeSupportedFormats) => [
   Html5QrcodeSupportedFormats.QR_CODE,
@@ -482,7 +495,12 @@ function decodeBarcodeWithQuagga(canvas) {
   })
 }
 
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
   stopLiveScan()
 })
 </script>
@@ -494,14 +512,16 @@ onBeforeUnmount(() => {
 .scanner-input-row {
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: stretch;
 }
 .scanner-input-row .el-input {
   flex: 1;
+  min-width: 180px;
 }
 .scan-btn {
   white-space: nowrap;
   flex-shrink: 0;
+  min-height: 40px;
 }
 .live-scanner {
   display: grid;
@@ -564,6 +584,15 @@ onBeforeUnmount(() => {
 .scan-error {
   color: #f56c6c;
 }
+.scan-error-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.scanner-footer {
+  padding-bottom: env(safe-area-inset-bottom);
+}
 .file-scanner-host {
   position: fixed;
   left: -9999px;
@@ -578,9 +607,33 @@ onBeforeUnmount(() => {
     display: grid;
     grid-template-columns: 1fr;
   }
+  .scanner-input-row .el-input {
+    min-width: 0;
+  }
+  .scan-btn {
+    width: 100%;
+  }
   .scanner-preview {
-    min-height: 58vh;
+    min-height: min(62vh, 560px);
     aspect-ratio: auto;
+    border-radius: 0;
+  }
+  :deep(.scanner-dialog.el-dialog.is-fullscreen) {
+    display: flex;
+    flex-direction: column;
+  }
+  :deep(.scanner-dialog.el-dialog.is-fullscreen .el-dialog__body) {
+    flex: 1;
+    overflow: auto;
+    padding: 12px;
+  }
+  :deep(.scanner-dialog.el-dialog.is-fullscreen .el-dialog__footer) {
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid #ebeef5;
+  }
+  :deep(.scanner-dialog.el-dialog.is-fullscreen .el-dialog__footer .el-button) {
+    width: 100%;
+    min-height: 42px;
   }
 }
 </style>

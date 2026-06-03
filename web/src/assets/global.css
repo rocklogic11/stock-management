@@ -70,7 +70,7 @@ html, body, #app {
   }
 
   /* 弹窗全屏 */
-  .el-dialog {
+  .el-dialog:not(.is-fullscreen) {
     width: 95% !important;
     margin-top: 5vh !important;
   }

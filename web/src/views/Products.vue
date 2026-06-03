@@ -45,8 +45,8 @@
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="generateQR(row)" v-if="canManageProducts">二维码</el-button>
-            <el-button link type="primary" size="small" @click="openDialog(row)">编辑</el-button>
-            <el-button link :type="row.status === 1 ? 'danger' : 'success'" size="small" @click="toggleStatus(row)">
+            <el-button link type="primary" size="small" @click="openDialog(row)" v-if="canManageProducts">编辑</el-button>
+            <el-button link :type="row.status === 1 ? 'danger' : 'success'" size="small" @click="toggleStatus(row)" v-if="canManageProducts">
               {{ row.status === 1 ? '下架' : '上架' }}
             </el-button>
           </template>
@@ -72,9 +72,9 @@
               <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '在售' : '下架' }}</el-tag>
             </div>
             <div class="mobile-product-actions">
-              <el-button size="small" type="primary" plain @click="openDialog(row)">编辑</el-button>
+              <el-button size="small" type="primary" plain @click="openDialog(row)" v-if="canManageProducts">编辑</el-button>
               <el-button size="small" plain @click="generateQR(row)" v-if="canManageProducts">二维码</el-button>
-              <el-button size="small" :type="row.status === 1 ? 'danger' : 'success'" plain @click="toggleStatus(row)">
+              <el-button size="small" :type="row.status === 1 ? 'danger' : 'success'" plain @click="toggleStatus(row)" v-if="canManageProducts">
                 {{ row.status === 1 ? '下架' : '上架' }}
               </el-button>
             </div>
@@ -98,10 +98,11 @@
       :title="editingId ? '编辑商品' : '新增商品'"
       :width="isMobile ? '100%' : '560px'"
       :fullscreen="isMobile"
+      :close-on-click-modal="false"
       class="product-dialog"
       :before-close="handleDialogClose"
     >
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" class="product-form">
         <el-form-item label="商品名称" prop="product_name">
           <el-input v-model="form.product_name" />
         </el-form-item>
@@ -139,8 +140,12 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="handleDialogClose">取消</el-button>
-        <el-button type="primary" @click="submitForm">确认</el-button>
+        <div class="product-dialog-footer">
+          <el-button :disabled="submitLoading" @click="handleDialogClose">取消</el-button>
+          <el-button type="primary" :loading="submitLoading" :disabled="categoryLoading" @click="submitForm">
+            {{ editingId ? '保存修改' : '创建商品' }}
+          </el-button>
+        </div>
       </template>
     </el-dialog>
 
@@ -176,6 +181,7 @@ const keyword = ref('')
 const categoryId = ref('')
 const categories = ref([])
 const categoryLoading = ref(false)
+const submitLoading = ref(false)
 
 const dialogVisible = ref(false)
 const editingId = ref(null)
@@ -306,6 +312,7 @@ const handleDialogClose = async (done) => {
 }
 
 const submitForm = async () => {
+  if (submitLoading.value) return
   if (categories.value.length === 0) {
     await fetchCategories().catch(() => {})
   }
@@ -315,6 +322,7 @@ const submitForm = async () => {
   }
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
+  submitLoading.value = true
   try {
     if (editingId.value) {
       await request.put(`/products/${editingId.value}`, form)
@@ -328,7 +336,10 @@ const submitForm = async () => {
     resetDialogTracking()
     dialogVisible.value = false
     fetchData()
-  } catch (e) {}
+  } catch (e) {
+  } finally {
+    submitLoading.value = false
+  }
 }
 
 const toggleStatus = async (row) => {
@@ -395,6 +406,11 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
   color: #909399;
   font-size: 13px;
 }
+.product-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 
 @media screen and (max-width: 768px) {
   .page-header {
@@ -410,6 +426,19 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
   .search-bar :deep(.el-select) {
     width: 100% !important;
   }
+  .add-product-btn {
+    width: 100%;
+    min-height: 42px;
+  }
+  :deep(.product-dialog.el-dialog.is-fullscreen) {
+    display: flex;
+    flex-direction: column;
+  }
+  :deep(.product-dialog.el-dialog.is-fullscreen .el-dialog__body) {
+    flex: 1;
+    overflow: auto;
+    padding: 12px 14px 92px;
+  }
   :deep(.product-dialog .el-dialog__body) {
     padding-bottom: 76px;
   }
@@ -419,12 +448,20 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
     right: 0;
     bottom: 0;
     z-index: 10;
-    padding: 10px 14px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
     background: #fff;
     box-shadow: 0 -4px 14px rgba(0,0,0,0.08);
   }
+  .product-dialog-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
   :deep(.product-dialog .el-dialog__footer .el-button) {
-    min-width: 96px;
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    margin-left: 0;
   }
   :deep(.product-dialog .el-form-item) {
     display: block;
